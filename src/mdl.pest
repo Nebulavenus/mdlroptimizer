@@ -1,5 +1,5 @@
 WHITESPACE = _{ " " }
-COMMENT = _{ "//" ~ ANY* ~ "//"? }
+COMMENT = _{ "//" ~ ANY* ~ (!"//" ~ ANY)* ~ "//"? }
 
 number = @{
     "-"?
@@ -8,20 +8,25 @@ number = @{
     ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
 
+value = { number }
+complex_value = { number ~ ","? ~ WHITESPACE? }
+
 chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9'}
 
 name = @{ chars* }
 
 field = { data ~ "," ~ NEWLINE }
-	data = ${ name ~ WHITESPACE ~ number }
+	data = ${ name ~ WHITESPACE ~ (simple | complex) }
+      simple = _{ value }
+      complex = _{ "{" ~ WHITESPACE ~ complex_value+ ~ "}" }
 
 section = { version | model | bone }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
-    model = { "Model" }
+    model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     bone = { "Bone" }
 
 mdl = _{
 	SOI
-	~ section* ~
+    ~ (section ~ NEWLINE*)* ~
     EOI
 }

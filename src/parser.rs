@@ -6,33 +6,13 @@ use std::fs;
 #[grammar = "mdl.pest"]
 pub struct MDLParser;
 
-pub fn parse(input: &str) {
+pub fn parse_dbg(input: &str) {
 
     let pairs = MDLParser::parse(Rule::mdl, input)
         .expect("unsuccessful parse")
         .next().unwrap();
 
     dbg!(&pairs);
-
-    let mut nodes = vec![];
-
-    let mut current_section_name = "";
-
-    for p in pairs.into_inner() {
-        match p.as_rule() {
-            Rule::section => {
-                let mut inner_rules = p.into_inner();
-                current_section_name = inner_rules.next().unwrap().as_str();
-                dbg!(&current_section_name);
-                nodes.push(current_section_name);
-            },
-            Rule::EOI => (),
-            _ => (),
-        }
-    }
-    dbg!(&current_section_name);
-
-    println!("{:#?}", nodes);
 }
 
 pub fn parse_file(path: String) {
@@ -71,6 +51,28 @@ mod tests {
             Simple 11.24123,
         }";
 
-        parse(input);
+        parse_dbg(input);
+    }
+
+    #[test]
+    fn parse_model_section() {
+        let input = "Model \"Name\" {
+            NumGeosets 1,
+            NumGeosetAnims 2,
+            NumLights 1,
+            NumHelpers 1,
+            NumBones 5,
+            NumAttachments 3,
+            NumParticleEmitters 1,
+            NumParticleEmitters2 1,
+            NumRibbonEmitters 1,
+            NumEvents 2,
+            BlendTime 150,
+            MinimumExtent { -27.125, -23.125, 0.225586 },
+            MaximumExtent { 22, 24.25, 98.5 },
+            BoundsRadius 34.4232,
+        }";
+
+        parse_dbg(input);
     }
 }
