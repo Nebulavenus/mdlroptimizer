@@ -1,6 +1,13 @@
 extern crate clap;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
+
+mod parser;
+
+use parser::parse_file;
 
 fn main() {
     let matches = App::new("MdlROptimizer")

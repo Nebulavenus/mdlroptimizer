@@ -1,0 +1,27 @@
+WHITESPACE = _{ " " }
+COMMENT = _{ "//" ~ ANY* ~ "//"? }
+
+number = @{
+    "-"?
+    ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
+    ~ ("." ~ ASCII_DIGIT*)?
+    ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
+}
+
+chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9'}
+
+name = @{ chars* }
+
+field = { data ~ "," ~ NEWLINE }
+	data = ${ name ~ WHITESPACE ~ number }
+
+section = { version | model | bone }
+	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
+    model = { "Model" }
+    bone = { "Bone" }
+
+mdl = _{
+	SOI
+	~ section* ~
+    EOI
+}
