@@ -20,9 +20,12 @@ field = { data ~ "," ~ NEWLINE }
       simple = _{ value }
       complex = _{ "{" ~ WHITESPACE ~ complex_value+ ~ "}" }
 
-section = { version | model | bone }
+sequence = { "Anim" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
+
+section = { version | model | sequences | bone }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
+    sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
     bone = { "Bone" }
 
 mdl = _{
