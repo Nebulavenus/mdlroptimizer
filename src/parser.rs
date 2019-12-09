@@ -659,4 +659,20 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_camera_section() {
+        let input = r#"Camera "Camera01" {
+            FieldOfView 0.785398,
+            FarClip 10000,
+            NearClip 1,
+            Position { 106.874, -18.4191, 134.402 },
+            Target {
+                Position { 7.57606, 1.70948, 123.683 },
+            }
+        }
+        "#;
+
+        parse_dbg(input);
+    }
 }
