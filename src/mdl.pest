@@ -40,7 +40,8 @@ section_names = {
 
 section = {
     version | model | sequences | global_sequences | bone |
-    textures | materials | texture_anims | geoset | attachment
+    textures | materials | texture_anims | geoset | attachment |
+    pivot_points
 }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
@@ -55,6 +56,7 @@ section = {
     texture_anims = { "TextureAnims" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
     geoset = { "Geoset" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
     attachment = { "Attachment" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
+    pivot_points = { "PivotPoints" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
 
 mdl = _{
 	SOI
