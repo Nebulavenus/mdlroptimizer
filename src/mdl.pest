@@ -38,7 +38,7 @@ section_names = {
     "Camera"
 }
 
-section = { version | model | sequences | global_sequences | bone | textures | materials }
+section = { version | model | sequences | global_sequences | bone | textures | materials | texture_anims }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
@@ -49,6 +49,7 @@ section = { version | model | sequences | global_sequences | bone | textures | m
 
 	textures = { "Textures" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
     materials = { "Materials" ~ number ~ "{" ~ NEWLINE ~ anything_between  ~ "}" }
+    texture_anims = { "TextureAnims" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
 
 mdl = _{
 	SOI

@@ -251,4 +251,21 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_texture_anims_section() {
+        let input = r#"TextureAnims 1 {
+            TVertexAnim {
+                Translation 2 {
+                    Linear,
+                    GlobalSeqId 0,
+                    0: { 0, 0, 0 },
+                    3000: { 0, -1, 0 },
+                }
+            }
+        }
+        "#;
+
+        parse_dbg(input);
+    }
 }
