@@ -11,16 +11,17 @@ number = @{
 value = { number }
 complex_value = { number ~ ","? ~ WHITESPACE? }
 
-chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9'}
+chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9' }
 
 name = @{ chars* }
+anim_name = @{ (chars | " " | "-")* }
 
 field = { data ~ "," ~ NEWLINE }
 	data = ${ name ~ WHITESPACE ~ (simple | complex) }
       simple = _{ value }
       complex = _{ "{" ~ WHITESPACE ~ complex_value+ ~ "}" }
 
-sequence = { "Anim" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
+sequence = { "Anim" ~ "\"" ~ anim_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
 
 section = { version | model | sequences | bone }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }

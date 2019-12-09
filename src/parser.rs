@@ -79,13 +79,13 @@ mod tests {
     #[test]
     fn parse_sequences_section() {
         let input = r#"Sequences 4 {
-            Anim "StandPortrant" {
+            Anim "Stand 1 - Portrant" {
                 Interval { 416, 3416 },
                 MinimumExtent { -35.625, -44.6673, 0.450756 },
                 MaximumExtent { 128.058, 44.5145, 161.041 },
                 BoundsRadius 99.7335,
             }
-            Anim "Stand2" {
+            Anim "Stand 2" {
                 Interval { 3750, 5875 },
                 Rarity 3,
                 MinimumExtent { -35.625, -44.6673, 0.450756 },
