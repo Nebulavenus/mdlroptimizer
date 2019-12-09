@@ -147,4 +147,42 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_rest_sections() {
+        let input = r#"Textures 8 {
+            Bitmap {
+                Image "Textures\GenericGlowX_Mod2.blp",
+            }
+            Bitmap {
+                Image "Textures\Red_Star3.blp",
+            }
+            Bitmap {
+                Image "Textures\red_Glow3.blp",
+            }
+            Bitmap {
+                Image "ChaosWarrior.blp",
+                WrapWidth,
+                WrapHeight,
+            }
+            Bitmap {
+                Image "Textures\DemonGate.blp",
+                WrapWidth,
+                WrapHeight,
+            }
+            Bitmap {
+                Image "",
+                ReplaceableId 2,
+            }
+            Bitmap {
+                Image "",
+                ReplaceableId 1,
+            }
+            Bitmap {
+                Image "Textures\Footman.blp",
+            }
+        }"#;
+
+        parse_dbg(input);
+    }
 }

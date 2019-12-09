@@ -23,19 +23,24 @@ field = { data ~ "," ~ NEWLINE }
 
 sequence = { "Anim" ~ "\"" ~ anim_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
 
-bone_field = { field | translation | rotation | geoset }
+bone_field = { field | translation | rotation | b_geoset }
     interp_type = { "Linear" | "Hermite" }
     keys_field = ${ number ~ ":" ~ WHITESPACE ~ (simple | complex) }
 	translation = { "Translation" ~ number ~ "{" ~ NEWLINE ~ interp_type ~ "," ~ NEWLINE ~ (keys_field ~ "," ~ NEWLINE)* ~ "}" ~ NEWLINE }
     rotation = { "Rotation" ~ number ~ "{" ~ NEWLINE ~ interp_type ~ "," ~ NEWLINE ~ (keys_field ~ "," ~ NEWLINE)* ~ "}" ~ NEWLINE }
-    geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," ~ NEWLINE } // skip
+    // skip this for now
+    b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," ~ NEWLINE }
 
-section = { version | model | sequences | global_sequences | bone }
+section = { version | model | sequences | global_sequences | bone | textures }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
     global_sequences = { "GlobalSequences" ~ number ~ "{" ~ NEWLINE ~  field* ~ "}" }
     bone = { "Bone" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ bone_field* ~ "}" }
+
+	anything_between = _{ XID_START* ~ "{" ~ NEWLINE ~ (!("}") ~ ANY)* ~ "}" ~ NEWLINE }
+
+	textures = { "Textures" ~ number ~ "{" ~ NEWLINE ~ anything_between* ~ "}" }
 
 mdl = _{
 	SOI
