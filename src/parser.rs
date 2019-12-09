@@ -646,4 +646,17 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_event_object_section() {
+        let input = r#"EventObject "SNDxDDKN" {
+            ObjectId 35,
+            EventTrack 1 {
+                12083,
+            }
+        }
+        "#;
+
+        parse_dbg(input);
+    }
 }
