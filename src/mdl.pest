@@ -45,11 +45,10 @@ section = { version | model | sequences | global_sequences | bone | textures | m
     global_sequences = { "GlobalSequences" ~ number ~ "{" ~ NEWLINE ~  field* ~ "}" }
     bone = { "Bone" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ bone_field* ~ "}" }
 
-	anything_between = _{ XID_START* ~ "{" ~ NEWLINE ~ (!("}") ~ ANY)* ~ "}" ~ NEWLINE }
-    anything_between1 = _{ (!("}" ~ NEWLINE ~ (section_names | EOI)) ~ ANY)* }
+    anything_between = _{ (!("}" ~ NEWLINE ~ (section_names | EOI)) ~ ANY)* }
 
-	textures = { "Textures" ~ number ~ "{" ~ NEWLINE ~ anything_between* ~ "}" }
-    materials = { "Materials" ~ number ~ "{" ~ NEWLINE ~ anything_between1  ~ "}" }
+	textures = { "Textures" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
+    materials = { "Materials" ~ number ~ "{" ~ NEWLINE ~ anything_between  ~ "}" }
 
 mdl = _{
 	SOI

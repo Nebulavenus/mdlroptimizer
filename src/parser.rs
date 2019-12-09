@@ -181,7 +181,8 @@ mod tests {
             Bitmap {
                 Image "Textures\Footman.blp",
             }
-        }"#;
+        }
+        "#;
 
         parse_dbg(input);
     }
