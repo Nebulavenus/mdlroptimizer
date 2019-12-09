@@ -149,7 +149,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_rest_sections() {
+    fn parse_texture_section() {
         let input = r#"Textures 8 {
             Bitmap {
                 Image "Textures\GenericGlowX_Mod2.blp",
@@ -182,6 +182,71 @@ mod tests {
                 Image "Textures\Footman.blp",
             }
         }"#;
+
+        parse_dbg(input);
+    }
+
+    #[test]
+    fn parse_material_section() {
+        let input = r#"Materials 6 {
+            Material {
+                Layer {
+                    FilterMode None,
+                    static TextureID 6,
+                    TwoSided,
+                }
+                Layer {
+                    FilterMode Blend,
+                    static TextureID 3,
+                    TwoSided,
+                }
+            }
+            Material {
+                Layer {
+                    FilterMode None,
+                    static TextureID 6,
+                    TwoSided,
+                }
+                Layer {
+                    FilterMode Blend,
+                    static TextureID 3,
+                    TwoSided,
+                }
+            }
+            Material {
+                Layer {
+                    FilterMode None,
+                    static TextureID 6,
+                    TwoSided,
+                }
+                Layer {
+                    FilterMode Blend,
+                    static TextureID 3,
+                    TwoSided,
+                }
+            }
+            Material {
+                Layer {
+                    FilterMode Transparent,
+                    static TextureID 3,
+                    TwoSided,
+                }
+            }
+            Material {
+                Layer {
+                    FilterMode Transparent,
+                    static TextureID 4,
+                }
+            }
+            Material {
+                Layer {
+                    FilterMode Additive,
+                    static TextureID 5,
+                    Unshaded,
+                }
+            }
+        }
+        "#;
 
         parse_dbg(input);
     }

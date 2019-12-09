@@ -31,7 +31,14 @@ bone_field = { field | translation | rotation | b_geoset }
     // skip this for now
     b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," ~ NEWLINE }
 
-section = { version | model | sequences | global_sequences | bone | textures }
+section_names = {
+	"Version" | "Model" | "Sequences" | "GlobalSequences" |
+    "Bone" | "Materials" | "TextureAnims" | "Geoset" | "Textures" |
+    "Attachment" | "PivotPoints" | "ParticleEmitter2" | "EventObject" |
+    "Camera"
+}
+
+section = { version | model | sequences | global_sequences | bone | textures | materials }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
@@ -39,8 +46,10 @@ section = { version | model | sequences | global_sequences | bone | textures }
     bone = { "Bone" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ bone_field* ~ "}" }
 
 	anything_between = _{ XID_START* ~ "{" ~ NEWLINE ~ (!("}") ~ ANY)* ~ "}" ~ NEWLINE }
+    anything_between1 = _{ (!("}" ~ NEWLINE ~ (section_names | EOI)) ~ ANY)* }
 
 	textures = { "Textures" ~ number ~ "{" ~ NEWLINE ~ anything_between* ~ "}" }
+    materials = { "Materials" ~ number ~ "{" ~ NEWLINE ~ anything_between1  ~ "}" }
 
 mdl = _{
 	SOI
