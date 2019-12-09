@@ -537,4 +537,17 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_attachment_section() {
+        let input = r#"Attachment "Origin Ref" {
+            ObjectId 20,
+            Parent 0,
+            DontInherit { Scaling },
+            AttachmentID 0,
+        }
+        "#;
+
+        parse_dbg(input);
+    }
 }

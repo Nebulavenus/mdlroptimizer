@@ -13,15 +13,15 @@ complex_value = { number ~ ","? ~ WHITESPACE? }
 
 chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9' }
 
-name = @{ chars* }
-anim_name = @{ (chars | " " | "-")* }
+field_name = @{ chars* }
+section_name = @{ (chars | " " | "-")* }
 
 field = { data ~ "," ~ NEWLINE }
-	data = ${ name ~ WHITESPACE ~ (simple | complex) }
+	data = ${ field_name ~ WHITESPACE ~ (simple | complex) }
       simple = _{ value }
       complex = _{ "{" ~ WHITESPACE ~ complex_value+ ~ "}" }
 
-sequence = { "Anim" ~ "\"" ~ anim_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
+sequence = { "Anim" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
 
 bone_field = { field | translation | rotation | b_geoset }
     interp_type = { "Linear" | "Hermite" }
@@ -38,12 +38,15 @@ section_names = {
     "Camera"
 }
 
-section = { version | model | sequences | global_sequences | bone | textures | materials | texture_anims | geoset }
+section = {
+    version | model | sequences | global_sequences | bone |
+    textures | materials | texture_anims | geoset | attachment
+}
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
-    model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
+    model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
     global_sequences = { "GlobalSequences" ~ number ~ "{" ~ NEWLINE ~  field* ~ "}" }
-    bone = { "Bone" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ bone_field* ~ "}" }
+    bone = { "Bone" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ NEWLINE ~ bone_field* ~ "}" }
 
     anything_between = _{ (!("}" ~ NEWLINE ~ (section_names | EOI)) ~ ANY)* }
 
@@ -51,6 +54,7 @@ section = { version | model | sequences | global_sequences | bone | textures | m
     materials = { "Materials" ~ number ~ "{" ~ NEWLINE ~ anything_between  ~ "}" }
     texture_anims = { "TextureAnims" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
     geoset = { "Geoset" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
+    attachment = { "Attachment" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
 
 mdl = _{
 	SOI
