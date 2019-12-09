@@ -602,4 +602,48 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_particle_emitter_section() {
+        let input = r#"ParticleEmitter2 "star" {
+            ObjectId 30,
+            Parent 18,
+            Additive,
+            static Speed 600,
+            static Variation 0,
+            static Latitude 0,
+            static Gravity 25,
+            EmissionRate 3 {
+                DontInterp,
+                0: 0,
+                27000: 100,
+                27555: 0,
+            }
+            static Width 0,
+            static Length 0,
+            SegmentColor {
+                Color { 1, 1, 1 },
+                Color { 1, 1, 1 },
+                Color { 1, 1, 1 },
+            },
+            Alpha { 255, 255, 0 },
+            ParticleScaling { 30, 30, 15 },
+            LifeSpanUVAnim { 0, 0, 1 },
+            DecayUVAnim { 0, 0, 1 },
+            TailUVAnim { 0, 0, 1 },
+            TailDecayUVAnim { 0, 0, 1 },
+            Rows 1,
+            Columns 1,
+            TextureID 1,
+            Time 1.73277e-039,
+            LifeSpan 0.1,
+            TailLength 1.82169e-043,
+            LineEmitter,
+            Unshaded,
+            Head,
+        }
+        "#;
+
+        parse_dbg(input);
+    }
 }

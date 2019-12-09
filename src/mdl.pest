@@ -41,7 +41,7 @@ section_names = {
 section = {
     version | model | sequences | global_sequences | bone |
     textures | materials | texture_anims | geoset | attachment |
-    pivot_points
+    pivot_points | particle_emitter2
 }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
@@ -57,6 +57,7 @@ section = {
     geoset = { "Geoset" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
     attachment = { "Attachment" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
     pivot_points = { "PivotPoints" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
+    particle_emitter2 = { "ParticleEmitter2" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
 
 mdl = _{
 	SOI
