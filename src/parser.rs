@@ -56,7 +56,7 @@ mod tests {
 
     #[test]
     fn parse_model_section() {
-        let input = "Model \"Name\" {
+        let input = r#"Model "Name" {
             NumGeosets 1,
             NumGeosetAnims 2,
             NumLights 1,
@@ -71,7 +71,7 @@ mod tests {
             MinimumExtent { -27.125, -23.125, 0.225586 },
             MaximumExtent { 22, 24.25, 98.5 },
             BoundsRadius 34.4232,
-        }";
+        }"#;
 
         parse_dbg(input);
     }
@@ -114,6 +114,35 @@ mod tests {
         let input = r#"GlobalSequences 2 {
             Duration 3000,
             Duration 200,
+        }"#;
+
+        parse_dbg(input);
+    }
+
+    #[test]
+    fn parse_bone_section() {
+        let input = r#"Bone "Root" {
+            ObjectId 0,
+            Translation 7 {
+                Linear,
+                41: { 0, 0, 0 },
+                416: { 0, 0, -1.79688 },
+                1583: { 0.0306396, 0, -3.0625 },
+                1916: { 0.0334473, 0, -3.125 },
+                3416: { 0, 0, -1.79688 },
+                5875: { 0, 0, -1.79688 },
+                6250: { 0, 0, -7 },
+            }
+            Rotation 5 {
+                Linear,
+                41: { 0, 0, 0, 1 },
+                416: { 0, 0, 0.291016, 0.953125 },
+                5875: { 0, 0, 0.291016, 0.953125 },
+                6250: { 0, 0, 0, 1 },
+                7500: { 0, 0, 0, 1 },
+            }
+            GeosetId Multiple,
+            GeosetAnimId None,
         }"#;
 
         parse_dbg(input);
