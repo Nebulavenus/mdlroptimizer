@@ -23,10 +23,11 @@ field = { data ~ "," ~ NEWLINE }
 
 sequence = { "Anim" ~ "\"" ~ anim_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
 
-section = { version | model | sequences | bone }
+section = { version | model | sequences | global_sequences | bone }
 	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
     sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
+    global_sequences = { "GlobalSequences" ~ number ~ "{" ~ NEWLINE ~  field* ~ "}" }
     bone = { "Bone" }
 
 mdl = _{

@@ -108,4 +108,14 @@ mod tests {
 
         parse_dbg(input);
     }
+
+    #[test]
+    fn parse_global_sequences_section() {
+        let input = r#"GlobalSequences 2 {
+            Duration 3000,
+            Duration 200,
+        }"#;
+
+        parse_dbg(input);
+    }
 }
