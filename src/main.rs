@@ -10,6 +10,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 
 mod util;
 mod parser;
+mod model;
 
 use parser::parse_file;
 

@@ -15,38 +15,65 @@ fn parse_dbg(input: &str) {
     dbg!(&pairs);
 }
 
-pub fn parse_file(path: String) {
+use crate::model::{Model, Anim};
+
+pub fn parse_file(path: &str) -> (String, Model) {
     let raw_file = fs::read_to_string(path).expect("cannot read file");
 
     use crate::util::remove_comments;
     let unparsed_file = remove_comments(&raw_file);
 
-    let file = MDLParser::parse(Rule::mdl, &unparsed_file)
+    let pairs = MDLParser::parse(Rule::mdl, &unparsed_file)
         .expect("unsuccessful parse")
-        .next().unwrap();
+        .next().unwrap().into_inner();
 
-    let mut result: HashMap<&str, HashMap<&str, &str>> = HashMap::new();
+    let mut model = Model::default();
 
-    let mut current_section_name = "";
-
-    for line in file.into_inner() {
-        match line.as_rule() {
+    for pair in pairs.clone() {
+        match pair.as_rule() {
             Rule::section => {
-                let mut inner_rules = line.into_inner();
-                current_section_name = inner_rules.next().unwrap().as_str();
-            },
-            Rule::EOI => (),
-            _ => unreachable!(),
+                let inner_section = pair.into_inner();
+                inner_section
+                    .clone()
+                    .map(|pair| {
+                        match pair.as_rule() {
+                            Rule::model => {
+                                let inner_model = pair.into_inner();
+                                inner_model
+                                    .clone()
+                                    .map(|pair| {
+                                        match pair.as_rule() {
+                                            Rule::field_name => {
+                                                dbg!(pair.as_str());
+                                                model.name = String::from(pair.as_str());
+                                            },
+                                            _ => (),
+                                        }
+                                    })
+                                    .for_each(drop);
+                            },
+                            _ => (),
+                        }
+                    })
+                    .for_each(drop);
+            }
+            _ => (),
         }
     }
 
-    println!("{:#?}", result);
+    println!("{:#?}", model);
+    (unparsed_file, model)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs::File;
+
+    #[test]
+    fn parse_api_file() {
+        let (file, model) = parse_file("././testfiles/ChaosWarrior_unopt.mdl");
+    }
 
     #[test]
     fn parse_full_file() {
