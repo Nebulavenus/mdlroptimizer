@@ -6,6 +6,5 @@ pub fn remove_comments(text: &str) -> String {
         static ref RE: Regex = Regex::new(r"//[^\n]*").unwrap();
     }
     let result = RE.replace_all(text, "").to_string();
-    dbg!(&result);
     result
 }

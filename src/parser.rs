@@ -49,19 +49,32 @@ mod tests {
 
     #[test]
     fn parse_full_file() {
-        let raw_file = fs::read_to_string("././testfiles/ChaosWarrior_unopt.mdl")
+        let raw_file = fs::read_to_string("././testfiles/ChaosWarrior_opt1.mdl")
             .expect("not existing file");
 
         use crate::util::remove_comments;
         let unparsed_file = remove_comments(raw_file.as_str());
 
-        dbg!(&unparsed_file);
-
-        let file = MDLParser::parse(Rule::mdl, &unparsed_file)
+        let pairs = MDLParser::parse(Rule::mdl, &unparsed_file)
             .expect("unsuccessful parse")
             .next().unwrap();
 
-        dbg!(file);
+        //dbg!(&pairs);
+
+        for line in pairs.into_inner() {
+            match line.as_rule() {
+                Rule::section => {
+                    let mut inner_rules = line.into_inner();
+                    let current_section_name = inner_rules.next().unwrap().as_str();
+                    println!("{:#?}", current_section_name);
+                    //dbg!(current_section_name);
+                },
+                Rule::EOI => (),
+                _ => (),
+            }
+        }
+
+        parse_dbg(raw_file.as_ref());
     }
 
     #[test]

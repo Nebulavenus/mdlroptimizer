@@ -1,5 +1,5 @@
-WHITESPACE = _{ " " }
-COMMENT = _{ "//" ~ ANY* ~ (!"//" ~ ANY)* ~ "//"? }
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
 number = @{
     "-"?
@@ -9,59 +9,61 @@ number = @{
 }
 
 value = { number }
-complex_value = { number ~ ","? ~ WHITESPACE? }
+complex_value = { number ~ ","? ~ WHITE_SPACE? }
 
 chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9' }
 
 field_name = @{ chars* }
 section_name = @{ (chars | " " | "-")* }
 
-field = { data ~ "," ~ NEWLINE }
-	data = ${ field_name ~ WHITESPACE ~ (simple | complex) }
+field = { data ~ "," }
+	data = ${ (field_name ~ WHITE_SPACE ~ (simple | complex)) | field_name }
       simple = _{ value }
-      complex = _{ "{" ~ WHITESPACE ~ complex_value+ ~ "}" }
+      complex = _{ "{" ~ WHITE_SPACE ~ complex_value+ ~ "}" }
 
-sequence = { "Anim" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" ~ NEWLINE }
+sequence = { "Anim" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ field* ~ "}" }
 
 bone_field = { field | translation | rotation | b_geoset }
     interp_type = { "Linear" | "Hermite" }
-    keys_field = ${ number ~ ":" ~ WHITESPACE ~ (simple | complex) }
-	translation = { "Translation" ~ number ~ "{" ~ NEWLINE ~ interp_type ~ "," ~ NEWLINE ~ (keys_field ~ "," ~ NEWLINE)* ~ "}" ~ NEWLINE }
-    rotation = { "Rotation" ~ number ~ "{" ~ NEWLINE ~ interp_type ~ "," ~ NEWLINE ~ (keys_field ~ "," ~ NEWLINE)* ~ "}" ~ NEWLINE }
-    b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," ~ NEWLINE }
+    keys_field = ${ number ~ ":" ~ WHITE_SPACE ~ (simple | complex) }
+	translation = { "Translation" ~ number ~ "{" ~ interp_type ~ "," ~ (keys_field ~ ",")* ~ "}" }
+    rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ (keys_field ~ ",")* ~ "}" }
+    b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," }
 
+// Small hack for attachment
 section_names = {
-	"Version" | "Model" | "Sequences" | "GlobalSequences" |
-    "Bone" | "Materials" | "TextureAnims" | "Geoset" | "Textures" |
-    "Attachment" | "PivotPoints" | "ParticleEmitter2" | "EventObject" |
+	"Version" | "Model" | "Sequences" | "GlobalSequences" | "Bone" |
+	"Helper" | "Materials" | "TextureAnims" | "Geoset" | "Textures" |
+    "Attachment " | "PivotPoints" | "ParticleEmitter2" | "EventObject" |
     "Camera"
 }
 
 section = {
-    version | model | sequences | global_sequences | bone |
+    version | model | sequences | global_sequences | bone | helper |
     textures | materials | texture_anims | geoset | attachment |
     pivot_points | particle_emitter2 | event_object | camera
 }
-	version = { "Version" ~ "{" ~ NEWLINE ~ field* ~ "}" }
-    model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ NEWLINE ~ field* ~ "}" }
-    sequences = { "Sequences" ~ number ~ "{" ~ NEWLINE ~ sequence* ~ "}" }
-    global_sequences = { "GlobalSequences" ~ number ~ "{" ~ NEWLINE ~  field* ~ "}" }
-    bone = { "Bone" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ NEWLINE ~ bone_field* ~ "}" }
+	version = { "Version" ~ "{" ~ field* ~ "}" }
+    model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ field* ~ "}" }
+    sequences = { "Sequences" ~ number ~ "{" ~ sequence* ~ "}" }
+    global_sequences = { "GlobalSequences" ~ number ~ "{" ~  field* ~ "}" }
+    bone = { "Bone" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ bone_field* ~ "}" }
+    helper = { "Helper" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ bone_field* ~ "}" }
 
-    anything_between = _{ (!("}" ~ NEWLINE ~ (section_names | EOI)) ~ ANY)* }
+    anything_between = _{ (!("}" ~ (section_names | EOI)) ~ ANY)* }
 
-	textures = { "Textures" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    materials = { "Materials" ~ number ~ "{" ~ NEWLINE ~ anything_between  ~ "}" }
-    texture_anims = { "TextureAnims" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    geoset = { "Geoset" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    attachment = { "Attachment" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    pivot_points = { "PivotPoints" ~ number ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    particle_emitter2 = { "ParticleEmitter2" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    event_object = { "EventObject" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
-    camera = { "Camera" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ NEWLINE ~ anything_between ~ "}" }
+	textures = { "Textures" ~ number ~ "{" ~ anything_between ~ "}" }
+    materials = { "Materials" ~ number ~ "{" ~ anything_between  ~ "}" }
+    texture_anims = { "TextureAnims" ~ number ~ "{" ~ anything_between ~ "}" }
+    geoset = { "Geoset" ~ "{" ~ anything_between ~ "}" }
+    attachment = { "Attachment" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
+    pivot_points = { "PivotPoints" ~ number ~ "{" ~ anything_between ~ "}" }
+    particle_emitter2 = { "ParticleEmitter2" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
+    event_object = { "EventObject" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
+    camera = { "Camera" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
 
 mdl = _{
 	SOI
-    ~ (section ~ NEWLINE*)* ~
+    ~ section* ~
     EOI
 }
