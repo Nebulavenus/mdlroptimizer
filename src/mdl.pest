@@ -30,7 +30,6 @@ bone_field = { field | translation | rotation | b_geoset }
     rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ (keys_field ~ ",")* ~ "}" }
     b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," }
 
-// Small hack for attachment
 section_names = {
 	"Version" | "Model" | "Sequences" | "GlobalSequences" | "Bone" |
 	"Helper" | "Materials" | "TextureAnims" | "Geoset" | "Textures" |
@@ -62,7 +61,7 @@ section = {
     event_object = { "EventObject" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
     camera = { "Camera" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
 
-mdl = _{
+mdl = {
 	SOI
     ~ section* ~
     EOI

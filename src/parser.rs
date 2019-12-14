@@ -6,7 +6,7 @@ use std::fs;
 #[grammar = "mdl.pest"]
 pub struct MDLParser;
 
-pub fn parse_dbg(input: &str) {
+fn parse_dbg(input: &str) {
 
     let pairs = MDLParser::parse(Rule::mdl, input)
         .expect("unsuccessful parse")
@@ -19,7 +19,7 @@ pub fn parse_file(path: String) {
     let raw_file = fs::read_to_string(path).expect("cannot read file");
 
     use crate::util::remove_comments;
-    let unparsed_file = remove_comments(raw_file.as_str());
+    let unparsed_file = remove_comments(&raw_file);
 
     let file = MDLParser::parse(Rule::mdl, &unparsed_file)
         .expect("unsuccessful parse")
@@ -46,35 +46,22 @@ pub fn parse_file(path: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
 
     #[test]
     fn parse_full_file() {
-        let raw_file = fs::read_to_string("././testfiles/ChaosWarrior_opt1.mdl")
+        let raw_file = fs::read_to_string("././testfiles/ChaosWarrior_unopt.mdl")
             .expect("not existing file");
 
         use crate::util::remove_comments;
-        let unparsed_file = remove_comments(raw_file.as_str());
+        let unparsed_file = remove_comments(&raw_file);
 
         let pairs = MDLParser::parse(Rule::mdl, &unparsed_file)
             .expect("unsuccessful parse")
             .next().unwrap();
 
-        //dbg!(&pairs);
-
-        for line in pairs.into_inner() {
-            match line.as_rule() {
-                Rule::section => {
-                    let mut inner_rules = line.into_inner();
-                    let current_section_name = inner_rules.next().unwrap().as_str();
-                    println!("{:#?}", current_section_name);
-                    //dbg!(current_section_name);
-                },
-                Rule::EOI => (),
-                _ => (),
-            }
-        }
-
-        parse_dbg(raw_file.as_ref());
+        // For visual representation, but if file is too big, this test will terminate
+        //println!("{}", pairs.into_inner());
     }
 
     #[test]
