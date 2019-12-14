@@ -16,7 +16,10 @@ pub fn parse_dbg(input: &str) {
 }
 
 pub fn parse_file(path: String) {
-    let unparsed_file = fs::read_to_string(path).expect("cannot read file");
+    let raw_file = fs::read_to_string(path).expect("cannot read file");
+
+    use crate::util::remove_comments;
+    let unparsed_file = remove_comments(raw_file.as_str());
 
     let file = MDLParser::parse(Rule::mdl, &unparsed_file)
         .expect("unsuccessful parse")
@@ -43,6 +46,23 @@ pub fn parse_file(path: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parse_full_file() {
+        let raw_file = fs::read_to_string("././testfiles/ChaosWarrior_unopt.mdl")
+            .expect("not existing file");
+
+        use crate::util::remove_comments;
+        let unparsed_file = remove_comments(raw_file.as_str());
+
+        dbg!(&unparsed_file);
+
+        let file = MDLParser::parse(Rule::mdl, &unparsed_file)
+            .expect("unsuccessful parse")
+            .next().unwrap();
+
+        dbg!(file);
+    }
 
     #[test]
     fn parse_version_section() {

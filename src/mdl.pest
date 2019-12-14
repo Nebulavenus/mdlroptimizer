@@ -28,7 +28,6 @@ bone_field = { field | translation | rotation | b_geoset }
     keys_field = ${ number ~ ":" ~ WHITESPACE ~ (simple | complex) }
 	translation = { "Translation" ~ number ~ "{" ~ NEWLINE ~ interp_type ~ "," ~ NEWLINE ~ (keys_field ~ "," ~ NEWLINE)* ~ "}" ~ NEWLINE }
     rotation = { "Rotation" ~ number ~ "{" ~ NEWLINE ~ interp_type ~ "," ~ NEWLINE ~ (keys_field ~ "," ~ NEWLINE)* ~ "}" ~ NEWLINE }
-    // skip this for now
     b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," ~ NEWLINE }
 
 section_names = {
