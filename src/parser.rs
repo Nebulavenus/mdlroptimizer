@@ -1,6 +1,9 @@
 use pest::Parser;
 use std::collections::HashMap;
 use std::fs;
+use std::str::FromStr;
+use crate::model::{Model, Anim};
+use pest::iterators::Pairs;
 
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
@@ -15,7 +18,48 @@ fn parse_dbg(input: &str) {
     dbg!(&pairs);
 }
 
-use crate::model::{Model, Anim};
+pub fn parse_field(inner_field: Pairs<'_, Rule>) -> (String, Vec<f32>) {
+    let mut field_name = String::new();
+    let mut values = Vec::<f32>::new();
+
+    inner_field
+        .map(|pair| {
+            match pair.as_rule() {
+                Rule::data => {
+                    let inner_data = pair.into_inner();
+                    inner_data
+                        .clone()
+                        .map(|pair| {
+                            //dbg!(&pair);
+                            match pair.as_rule() {
+                                Rule::field_name => {
+                                    field_name = String::from(pair.as_str());
+                                },
+                                Rule::value => {
+                                    let number
+                                        = f32::from_str(pair.as_str()).unwrap();
+                                    values.push(number);
+                                },
+                                Rule::complex_value => {
+                                    for inner_complex_value in pair.into_inner().clone() {
+                                        let number =
+                                            f32::from_str(inner_complex_value.as_str()).unwrap();
+                                        values.push(number);
+                                    }
+                                },
+                                _ => (),
+                            }
+                        })
+                        .for_each(drop);
+                },
+                _ => (),
+            }
+        })
+        .for_each(drop);
+    //dbg!(&field_name, &values);
+    (field_name, values)
+}
+
 
 pub fn parse_file(path: &str) -> (String, Model) {
     let raw_file = fs::read_to_string(path).expect("cannot read file");
@@ -51,7 +95,8 @@ pub fn parse_file(path: &str) -> (String, Model) {
                                                 let mut anim = Anim::default();
                                                 let inner_sequence = pair.into_inner();
                                                 anim.parse(inner_sequence.clone());
-                                                dbg!(anim);
+                                                //dbg!(anim);
+                                                model.sequences.push(anim);
                                             },
                                             _ => (),
                                         }

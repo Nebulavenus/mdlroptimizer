@@ -1,5 +1,4 @@
-use crate::parser;
-use crate::parser::Rule;
+use crate::parser::{Rule, parse_field};
 
 #[derive(Default, Debug)]
 pub struct Model {
@@ -9,7 +8,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn parse(&mut self, inner_model: pest::iterators::Pairs<'_, parser::Rule>) {
+    pub fn parse(&mut self, inner_model: pest::iterators::Pairs<'_, Rule>) {
         inner_model
             .map(|pair| {
                 match pair.as_rule() {
@@ -31,25 +30,27 @@ pub struct Anim {
 }
 
 impl Anim {
-    pub fn parse(&mut self, inner_sequence: pest::iterators::Pairs<'_, parser::Rule>) {
-        inner_sequence
+    pub fn parse(&mut self, inner_sequence: pest::iterators::Pairs<'_, Rule>) {
+        let mut anim_iter = inner_sequence
             .map(|pair| {
                 match pair.as_rule() {
                     Rule::section_name => {
                         self.name = String::from(pair.as_str());
                     },
                     Rule::field => {
-                        let interval = pair.into_inner()
-                            .clone()
-                            .next().unwrap();
-                        //dbg!(interval);
-                        //anim.interval = String::
+                        // Problematic area/Check for field name in future
+                        let (_, values) = parse_field(pair.into_inner().clone());
+                        let array: [u32; 2] = [values[0] as u32, values[1] as u32];
+                        self.interval = array;
                     },
                     _ => (),
                 }
 
-            })
-            .for_each(drop);
+            });
+        // Parse anim name
+        anim_iter.next().unwrap();
+        // Parse interval field
+        anim_iter.next().unwrap();
     }
 }
 
