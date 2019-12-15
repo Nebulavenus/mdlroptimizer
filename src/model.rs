@@ -14,7 +14,6 @@ impl Model {
             .map(|pair| {
                 match pair.as_rule() {
                     Rule::field_name => {
-                        dbg!(pair.as_str());
                         self.name = String::from(pair.as_str());
                     },
                     _ => (),
@@ -58,8 +57,12 @@ impl Anim {
 #[derive(Default, Debug)]
 pub struct Bone {
     pub name: String,
-    pub translations: Vec<Frame>,
-    pub rotations: Vec<Frame>,
+    pub translation_span: [usize; 2],
+    pub rotation_span: [usize; 2],
+    pub translation_frames: Vec<Frame>,
+    pub rotation_frames: Vec<Frame>,
+    pub translation_spans: Vec<[usize; 2]>,
+    pub rotation_spans: Vec<[usize; 2]>,
 }
 
 impl Bone {
@@ -75,14 +78,28 @@ impl Bone {
                     Rule::bone_field => {
                         //println!("{}", pair);
                         let inner_bone_field = pair.into_inner();
-                        let (translations, rotations)
+                        let (translations, rotations,
+                            translation_span, rotation_span,
+                            translation_spans, rotation_spans)
                             = parse_bone_field(inner_bone_field.clone());
 
                         if !translations.is_empty() {
-                            self.translations = translations;
+                            self.translation_spans = translation_spans.iter()
+                                .map(|span| [span.start(), span.end()])
+                                .collect();
+                            self.translation_frames = translations;
                         }
                         if !rotations.is_empty() {
-                            self.rotations = rotations;
+                            self.rotation_spans = rotation_spans.iter()
+                                .map(|span| [span.start(), span.end()])
+                                .collect();
+                            self.rotation_frames = rotations;
+                        }
+                        if !translation_span.as_str().is_empty() {
+                            self.translation_span = [translation_span.start(), translation_span.end()];
+                        }
+                        if !rotation_span.as_str().is_empty() {
+                            self.rotation_span = [rotation_span.start(), rotation_span.end()];
                         }
                     }
                     _ => (),

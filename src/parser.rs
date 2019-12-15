@@ -1,4 +1,4 @@
-use pest::Parser;
+use pest::{Parser, Span};
 use std::collections::HashMap;
 use std::fs;
 use std::str::FromStr;
@@ -85,9 +85,14 @@ pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>
     (name, values)
 }
 
-pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>) -> (Vec<Frame>, Vec<Frame>) {
+pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
+    -> (Vec<Frame>, Vec<Frame>, Span, Span, Vec<Span>, Vec<Span>) {
+    let mut translation_section_span = Span::new("", 0, 0).unwrap();
+    let mut rotation_section_span = Span::new("", 0, 0).unwrap();
     let mut translations = Vec::<Frame>::new();
     let mut rotations = Vec::<Frame>::new();
+    let mut translation_spans = Vec::<Span>::new();
+    let mut rotation_spans = Vec::<Span>::new();
 
     inner_bone_field
         .map(|pair| {
@@ -102,9 +107,12 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>) -> (Vec<Frame>, Vec<F
                         .map(|pair| {
                             match pair.as_rule() {
                                 Rule::number => {
+                                    translation_section_span = pair.clone().as_span();
                                     translation_count = i32::from_str(pair.as_str()).unwrap();
                                 },
                                 Rule::keys_field => {
+                                    translation_spans.push(pair.clone().as_span());
+
                                     let mut frame = Frame::default();
                                     let inner_keys_field = pair.into_inner();
                                     frame.parse(inner_keys_field.clone());
@@ -126,9 +134,12 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>) -> (Vec<Frame>, Vec<F
                         .map(|pair| {
                             match pair.as_rule() {
                                 Rule::number => {
+                                    rotation_section_span = pair.clone().as_span();
                                     rotation_count = i32::from_str(pair.as_str()).unwrap();
                                 },
                                 Rule::keys_field => {
+                                    rotation_spans.push(pair.clone().as_span());
+
                                     let mut frame = Frame::default();
                                     let inner_keys_field = pair.into_inner();
                                     frame.parse(inner_keys_field.clone());
@@ -146,7 +157,8 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>) -> (Vec<Frame>, Vec<F
         })
         .for_each(drop);
 
-    (translations, rotations)
+    (translations, rotations, translation_section_span,
+     rotation_section_span, translation_spans, rotation_spans)
 }
 
 pub fn parse_file(path: &str) -> (String, Model) {

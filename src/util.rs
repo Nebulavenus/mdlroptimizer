@@ -7,3 +7,21 @@ pub fn remove_comments(text: &str) -> String {
     }
     RE.replace_all(&text, "").to_string()
 }
+
+/*
+type Span = [usize; 2];
+
+impl From<pest::Span> for Span {
+    fn from(span: pest::Span) -> Self {
+        [span.start(), span.end()]
+    }
+}
+
+impl From<Vec<pest::Span>> for Vec<Span> {
+    fn from(spans: Vec<pest::Span>) -> Self {
+        spans
+            .map(|span| [span.start(), span.end()])
+            .collect()
+    }
+}
+*/
