@@ -1,4 +1,5 @@
-use crate::parser::{Rule, parse_field};
+use crate::parser::{Rule, parse_field, parse_bone_field, parse_bone_field_keys};
+use std::str::FromStr;
 
 #[derive(Default, Debug)]
 pub struct Model {
@@ -58,11 +59,50 @@ impl Anim {
 pub struct Bone {
     pub name: String,
     pub translations: Vec<Frame>,
-    pub rotation: Vec<Frame>,
+    pub rotations: Vec<Frame>,
+}
+
+impl Bone {
+    pub fn parse(&mut self, inner_bone: pest::iterators::Pairs<'_, Rule>) {
+
+        inner_bone
+            .clone()
+            .map(|pair| {
+                match pair.as_rule() {
+                    Rule::field_name => {
+                        self.name = String::from(pair.as_str());
+                    },
+                    Rule::bone_field => {
+                        //println!("{}", pair);
+                        let inner_bone_field = pair.into_inner();
+                        let (translations, rotations)
+                            = parse_bone_field(inner_bone_field.clone());
+
+                        if !translations.is_empty() {
+                            self.translations = translations;
+                        }
+                        if !rotations.is_empty() {
+                            self.rotations = rotations;
+                        }
+                    }
+                    _ => (),
+                }
+            })
+            .for_each(drop);
+    }
 }
 
 #[derive(Default, Debug)]
 pub struct Frame {
-    pub num: u32,
-    pub value: [f32; 3],
+    pub name: u32,
+    pub values: [f32; 3],
+}
+
+impl Frame {
+    pub fn parse(&mut self, inner_bone_field_keys: pest::iterators::Pairs<'_, Rule>) {
+        let (name, values) = parse_bone_field_keys(inner_bone_field_keys);
+        self.name = name;
+        let array: [f32; 3] = [values[0], values[1], values[2]];
+        self.values = array;
+    }
 }

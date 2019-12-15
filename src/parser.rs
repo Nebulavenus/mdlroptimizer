@@ -2,7 +2,7 @@ use pest::Parser;
 use std::collections::HashMap;
 use std::fs;
 use std::str::FromStr;
-use crate::model::{Model, Anim};
+use crate::model::{Model, Anim, Bone, Frame};
 use pest::iterators::Pairs;
 
 #[derive(Parser)]
@@ -60,6 +60,94 @@ pub fn parse_field(inner_field: Pairs<'_, Rule>) -> (String, Vec<f32>) {
     (field_name, values)
 }
 
+pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>) {
+    let mut name = 0;
+    let mut values = Vec::<f32>::new();
+
+    inner_bone_keys
+        .map(|pair| {
+            match pair.as_rule() {
+                Rule::number => {
+                    name = u32::from_str(pair.as_str()).unwrap();
+                },
+                Rule::complex_value => {
+                    for inner_complex_value in pair.into_inner().clone() {
+                        let number =
+                            f32::from_str(inner_complex_value.as_str()).unwrap();
+                        values.push(number);
+                    }
+                },
+                _ => (),
+            }
+        })
+        .for_each(drop);
+
+    (name, values)
+}
+
+pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>) -> (Vec<Frame>, Vec<Frame>) {
+    let mut translations = Vec::<Frame>::new();
+    let mut rotations = Vec::<Frame>::new();
+
+    inner_bone_field
+        .map(|pair| {
+            match pair.as_rule() {
+                Rule::translation => {
+                    // First is the Translation "Number" {
+                    let mut translation_count = 0;
+
+                    let inner_translation = pair.into_inner();
+                    inner_translation
+                        .clone()
+                        .map(|pair| {
+                            match pair.as_rule() {
+                                Rule::number => {
+                                    translation_count = i32::from_str(pair.as_str()).unwrap();
+                                },
+                                Rule::keys_field => {
+                                    let mut frame = Frame::default();
+                                    let inner_keys_field = pair.into_inner();
+                                    frame.parse(inner_keys_field.clone());
+                                    translations.push(frame);
+                                },
+                                _ => (),
+                            }
+                        })
+                        .for_each(drop);
+
+                    //dbg!(translation_count);
+                },
+                Rule::rotation => {
+                    let mut rotation_count = 0;
+
+                    let inner_rotation = pair.into_inner();
+                    inner_rotation
+                        .clone()
+                        .map(|pair| {
+                            match pair.as_rule() {
+                                Rule::number => {
+                                    rotation_count = i32::from_str(pair.as_str()).unwrap();
+                                },
+                                Rule::keys_field => {
+                                    let mut frame = Frame::default();
+                                    let inner_keys_field = pair.into_inner();
+                                    frame.parse(inner_keys_field.clone());
+                                    rotations.push(frame);
+                                },
+                                _ => (),
+                            }
+                        })
+                        .for_each(drop);
+
+                    //dbg!(rotation_count);
+                }
+                _ => (),
+            }
+        })
+        .for_each(drop);
+
+    (translations, rotations)
+}
 
 pub fn parse_file(path: &str) -> (String, Model) {
     let raw_file = fs::read_to_string(path).expect("cannot read file");
@@ -102,6 +190,12 @@ pub fn parse_file(path: &str) -> (String, Model) {
                                         }
                                     })
                                     .for_each(drop);
+                            },
+                            Rule::bone => {
+                                let mut bone = Bone::default();
+                                let inner_bone = pair.into_inner();
+                                bone.parse(inner_bone.clone());
+                                model.bones.push(bone);
                             }
                             _ => (),
                         }
