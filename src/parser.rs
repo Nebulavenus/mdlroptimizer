@@ -39,19 +39,25 @@ pub fn parse_file(path: &str) -> (String, Model) {
                         match pair.as_rule() {
                             Rule::model => {
                                 let inner_model = pair.into_inner();
-                                inner_model
+                                model.parse(inner_model.clone());
+                            },
+                            Rule::sequences => {
+                                let inner_sequences = pair.into_inner();
+                                inner_sequences
                                     .clone()
                                     .map(|pair| {
                                         match pair.as_rule() {
-                                            Rule::field_name => {
-                                                dbg!(pair.as_str());
-                                                model.name = String::from(pair.as_str());
+                                            Rule::sequence => {
+                                                let mut anim = Anim::default();
+                                                let inner_sequence = pair.into_inner();
+                                                anim.parse(inner_sequence.clone());
+                                                dbg!(anim);
                                             },
                                             _ => (),
                                         }
                                     })
                                     .for_each(drop);
-                            },
+                            }
                             _ => (),
                         }
                     })
