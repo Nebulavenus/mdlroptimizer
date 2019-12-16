@@ -8,8 +8,8 @@ pub fn optimize_model(model: Model)
     let mut delete_spans = Vec::<[usize; 2]>::new();
 
     // Span and new value
-    let mut translations_count: Vec<([usize; 2], u32)> = Vec::new();
-    let mut rotations_count: Vec<([usize; 2], u32)> = Vec::new();
+    let mut translation_section_spans: Vec<([usize; 2], u32)> = Vec::new();
+    let mut rotations_section_spans: Vec<([usize; 2], u32)> = Vec::new();
 
     // Start and end frames for animation
     let mut special_frames = Vec::<u32>::new();
@@ -39,8 +39,8 @@ pub fn optimize_model(model: Model)
             }
         }
         if !unique_frame.is_empty() {
-            translations_count.push((
-                bone.translation_spans[idx],
+            translation_section_spans.push((
+                bone.translation_span,
                 (bone.translation_spans.len() - unique_frame.len()) as u32
             ));
         }
@@ -64,8 +64,8 @@ pub fn optimize_model(model: Model)
             }
         }
         if !unique_frame.is_empty() {
-            rotations_count.push((
-                bone.rotation_spans[idx],
+            rotations_section_spans.push((
+                bone.rotation_span,
                 (bone.rotation_spans.len() - unique_frame.len()) as u32
             ));
         }
@@ -73,7 +73,7 @@ pub fn optimize_model(model: Model)
         //unique_frames.insert(idx, unique_frame);
     }
 
-    (delete_spans, translations_count, rotations_count)
+    (delete_spans, translation_section_spans, rotations_section_spans)
 }
 
 

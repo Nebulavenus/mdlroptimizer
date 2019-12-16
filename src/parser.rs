@@ -161,11 +161,9 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
      rotation_section_span, translation_spans, rotation_spans)
 }
 
-pub fn parse_file(path: &str) -> (String, Model) {
-    let raw_file = fs::read_to_string(path).expect("cannot read file");
-
+pub fn parse_file(input: &str) -> (String, Model) {
     use crate::util::remove_comments;
-    let unparsed_file = remove_comments(&raw_file);
+    let unparsed_file = remove_comments(&input);
 
     let pairs = MDLParser::parse(Rule::mdl, &unparsed_file)
         .expect("unsuccessful parse")
