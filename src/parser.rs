@@ -218,7 +218,7 @@ pub fn parse_file(path: &str) -> (String, Model) {
         }
     }
 
-    println!("{:#?}", model);
+    //println!("{:#?}", model);
     (unparsed_file, model)
 }
 

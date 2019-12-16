@@ -1,5 +1,7 @@
 use crate::parser::{Rule, parse_field, parse_bone_field, parse_bone_field_keys};
 use std::str::FromStr;
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 
 #[derive(Default, Debug)]
 pub struct Model {
@@ -109,10 +111,18 @@ impl Bone {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct Frame {
     pub name: u32,
     pub values: [f32; 3],
+}
+
+impl PartialEq for Frame {
+    fn eq(&self, other: &Self) -> bool {
+        self.values[0] == other.values[0] &&
+        self.values[1] == other.values[1] &&
+        self.values[2] == other.values[2]
+    }
 }
 
 impl Frame {

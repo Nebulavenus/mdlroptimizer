@@ -23,24 +23,25 @@ field = { data ~ "," }
 
 sequence = { "Anim" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ field* ~ "}" }
 
-bone_field = { field | translation | rotation | b_geoset }
-    interp_type = { "Linear" | "Hermite" }
-    keys_field = ${ number ~ ":" ~ WHITE_SPACE ~ (simple | complex) }
-	translation = { "Translation" ~ number ~ "{" ~ interp_type ~ "," ~ (keys_field ~ ",")* ~ "}" }
-    rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ (keys_field ~ ",")* ~ "}" }
+bone_field = { field | translation | rotation | b_geoset | scaling }
+    interp_type = { "Linear" | "Hermite" | "Bezier" }
+    keys_field = ${ (number | "InTan" | "OutTan") ~ ":"? ~ WHITE_SPACE ~ (simple | complex) ~ "," }
+	translation = { "Translation" ~ number ~ "{" ~ interp_type ~ "," ~ keys_field* ~ "}" }
+    rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ keys_field* ~ "}" }
     b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," }
+    scaling = { "Scaling" ~ number ~ "{" ~ interp_type ~ "," ~ field ~ keys_field* ~ "}" }
 
 section_names = {
 	"Version" | "Model" | "Sequences" | "GlobalSequences" | "Bone" |
-	"Helper" | "Materials" | "TextureAnims" | "Geoset" | "Textures" |
-    "Attachment " | "PivotPoints" | "ParticleEmitter2" | "EventObject" |
-    "Camera"
+	"Helper" | "Materials" | "TextureAnims" | "Geoset" | "GeosetAnim " |
+	"Textures" | "Attachment " | "PivotPoints" | "ParticleEmitter2" |
+    "EventObject" | "Camera"
 }
 
 section = {
     version | model | sequences | global_sequences | bone | helper |
-    textures | materials | texture_anims | geoset | attachment |
-    pivot_points | particle_emitter2 | event_object | camera
+    textures | materials | texture_anims | geoset | geoset_anim |
+    attachment | pivot_points | particle_emitter2 | event_object | camera
 }
 	version = { "Version" ~ "{" ~ field* ~ "}" }
     model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ field* ~ "}" }
@@ -55,6 +56,7 @@ section = {
     materials = { "Materials" ~ number ~ "{" ~ anything_between  ~ "}" }
     texture_anims = { "TextureAnims" ~ number ~ "{" ~ anything_between ~ "}" }
     geoset = { "Geoset" ~ "{" ~ anything_between ~ "}" }
+    geoset_anim = { "GeosetAnim" ~ "{" ~ anything_between ~ "}" }
     attachment = { "Attachment" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }
     pivot_points = { "PivotPoints" ~ number ~ "{" ~ anything_between ~ "}" }
     particle_emitter2 = { "ParticleEmitter2" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ anything_between ~ "}" }

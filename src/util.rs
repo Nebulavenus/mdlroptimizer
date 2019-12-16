@@ -8,20 +8,42 @@ pub fn remove_comments(text: &str) -> String {
     RE.replace_all(&text, "").to_string()
 }
 
-/*
-type Span = [usize; 2];
-
-impl From<pest::Span> for Span {
-    fn from(span: pest::Span) -> Self {
-        [span.start(), span.end()]
-    }
+pub fn remove_redundant_lines(input: String, spans: Vec<[usize; 2]>) -> (String, usize) {
+    let mut result = input;
+    let mut difference = 0usize;
+    spans
+        .iter()
+        .enumerate()
+        .map(|(idx, line)| {
+            let start = line[0] - difference;
+            let end = line[1] - difference;
+            result.replace_range(start..end, "");
+            difference += line[1] - line[0];
+            //dbg!(difference);
+            //dbg!(idx);
+        })
+        .for_each(drop);
+    (result, difference)
 }
 
-impl From<Vec<pest::Span>> for Vec<Span> {
-    fn from(spans: Vec<pest::Span>) -> Self {
-        spans
-            .map(|span| [span.start(), span.end()])
-            .collect()
-    }
+pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>, diff: usize) -> (String, usize) {
+    let mut result = input;
+    let mut difference = diff;
+    spans
+        .iter()
+        .enumerate()
+        .map(|(idx, span)| {
+            let (line, value) = span;
+            let start = line[0] - difference;
+            let mut end = line[1] - difference;
+            result.replace_range(start..end, "");
+
+            //end += value.to_string().as_str().len();
+            result.replace_range(start..end, value.to_string().as_str());
+            difference += line[1] - line[0] + value.to_string().as_str().len();
+            dbg!(difference);
+            //dbg!(idx);
+        })
+        .for_each(drop);
+    (result, difference)
 }
-*/
