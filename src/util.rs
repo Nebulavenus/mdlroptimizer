@@ -26,7 +26,6 @@ pub fn remove_redundant_lines(input: String, spans: Vec<[usize; 2]>) -> String {
     result
 }
 
-// TODO(nv): audit this part of code VERY careful
 pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> String {
     let mut result = input;
     let mut difference = 0usize;

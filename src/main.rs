@@ -38,6 +38,9 @@ pub fn parse_optimize_model(path: &Path) {
     let model= parse_file(&raw_string);
     let (redundant_lines, translation_values, rotation_values)
         = optimize_model(model);
+    dbg!(&redundant_lines.len());
+    println!("{:?}", translation_values);
+    println!("{:?}", rotation_values);
     let processed_string
         = remove_redundant_lines(raw_string, redundant_lines);
 
@@ -97,6 +100,7 @@ mod tests {
 
     #[test]
     fn test() {
-        parse_optimize_model("././testfiles/ChaosWarrior_opt1.mdl".as_ref());
+        //parse_optimize_model("././testfiles/ChaosWarrior_opt1.mdl".as_ref());
+        parse_optimize_model("././testfiles/DruidCat1.mdl".as_ref());
     }
 }
