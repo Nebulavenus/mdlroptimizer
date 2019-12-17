@@ -18,40 +18,53 @@ mod optimizer;
 
 use parser::parse_file;
 use optimizer::optimize_model;
-use crate::util::{remove_redundant_lines, replace_values_at_spans};
+use crate::util::{remove_redundant_lines, replace_values_at_spans, combine_spans_and_value};
 use std::fs;
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
+use crate::optimizer::bone_section_spans;
 
-// TODO(nv): rewrite this in future
-#[took(description = "done model optimizing in")]
+#[took(description = "Optimizing model...")]
 pub fn parse_optimize_model(path: &Path) {
+    // Load mdl file at specific path
     let file_name = path.file_stem().unwrap();
     let mut file = File::open(path).expect("cannot find file");
     let buf_size = file.metadata().map(|m| m.len() as usize + 1).unwrap_or(0);
     let mut raw_string = String::with_capacity(buf_size);
     file.read_to_string(&mut raw_string).expect("good");
-    //let raw_file = fs::read_to_string(path).expect("cannot read file");
 
-    let (file, model) = parse_file(&raw_string);
-    let (redundant_lines, _, _) = optimize_model(model);
-    let file1 = remove_redundant_lines(file.clone(), redundant_lines);
+    // All important values
+    let model= parse_file(&raw_string);
+    let (redundant_lines, translation_values, rotation_values)
+        = optimize_model(model);
+    let processed_string
+        = remove_redundant_lines(raw_string, redundant_lines);
+
+    // Replace old values in all bones translation sections
+    let model1 = parse_file(&processed_string);
+    let (translation_spans, _) = bone_section_spans(model1);
+    let mut to_replace_translation_spans
+        = combine_spans_and_value(translation_spans, translation_values);
+    //println!("{:?}", &to_replace_translation_spans);
+    let processed_string1
+        = replace_values_at_spans(processed_string, to_replace_translation_spans);
+
+    // Replace old values in all bones rotations sections
+    let model2 = parse_file(&processed_string1);
+    let (_, rotation_spans) = bone_section_spans(model2);
+    let mut to_replace_rotation_spans
+        = combine_spans_and_value(rotation_spans, rotation_values);
+    //println!("{:?}", &to_replace_rotation_spans);
+    let final_string
+        = replace_values_at_spans(processed_string1, to_replace_rotation_spans);
 
 
-    let (file2, model1) = parse_file(&file1);
-    let (_, translation_spans, _) = optimize_model(model1);
-    let file3 = replace_values_at_spans(file2, translation_spans);
-
-    let (file4, model2) = parse_file(&file3);
-    let (_, _, rotation_spans) = optimize_model(model2);
-    let file5 = replace_values_at_spans(file4, rotation_spans);
-    //let (result, _) = replace_values_at_spans(f2, rs, d2);
-
+    // Output result
     let new_file_name =
         String::from(file_name.to_str().unwrap()) + String::from("_optimized.mdl").as_ref();
 
-    std::fs::write(new_file_name, file5);
+    std::fs::write(new_file_name, final_string);
 }
 
 fn main() {
@@ -69,6 +82,7 @@ fn main() {
         .arg(Arg::with_name("file")
             .help("Optimize mdl file")
             .takes_value(true)
+            .short("f")
             .long("optimize"))
         .get_matches();
 
