@@ -207,6 +207,12 @@ pub fn parse_file(input: &str) -> Model {
                                 let inner_bone = pair.into_inner();
                                 bone.parse(inner_bone.clone());
                                 model.bones.push(bone);
+                            },
+                            Rule::helper => {
+                                let mut bone = Bone::default();
+                                let inner_bone = pair.into_inner();
+                                bone.parse(inner_bone.clone());
+                                model.helpers.push(bone);
                             }
                             _ => (),
                         }

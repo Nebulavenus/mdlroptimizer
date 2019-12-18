@@ -14,6 +14,14 @@ pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([
             rotation_section_spans.push((bone.rotation_span, bone.rotation_frames.len() as u32));
         }
     }
+    for helper in model.helpers.iter() {
+        if !helper.translation_frames.is_empty() {
+            translation_section_spans.push((helper.translation_span, helper.translation_frames.len() as u32));
+        }
+        if !helper.rotation_frames.is_empty() {
+            rotation_section_spans.push((helper.rotation_span, helper.rotation_frames.len() as u32));
+        }
+    }
     (translation_section_spans, rotation_section_spans)
 }
 
@@ -30,9 +38,8 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
         special_frames.push(anim.interval[1]);
         anim_frame_ranges.push((anim.interval[0]..=anim.interval[1]));
     }
-    //println!("{:?}", &special_frames);
-    println!("{:?}", &anim_frame_ranges);
 
+    // Inside bones
     for (idx, bone) in model.bones.iter().enumerate() {
 
         // Range translation frames
@@ -54,18 +61,9 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
                 .peekable();
             while let Some((_, curr_frame)) = irtf.next() {
                 if let Some((idx, next_frame)) = irtf.peek() {
-                    //if next_frame.values != peek_frame.values {
                     if curr_frame.values == next_frame.values {
-                        //dbg!(bone.translation_spans[*idx]);
                         if !special_frames.contains(&next_frame.name) {
-                            dbg!(&bone.name);
-                            dbg!(&curr_frame.name);
-                            dbg!(&next_frame.name);
                             delete_spans.push(bone.translation_spans[*idx]);
-
-                            // Skip curr_frame which is marked next_frame
-                            //irtf.nth(1);
-                            //continue;
                         }
                     }
                 }
@@ -91,16 +89,68 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
                 .peekable();
             while let Some((_, curr_frame)) = irrf.next() {
                 if let Some((idx, next_frame)) = irrf.peek() {
-                    //if next_frame.values != peek_frame.values {
                     if curr_frame.values == next_frame.values {
-                        //dbg!(bone.translation_spans[*idx]);
                         if !special_frames.contains(&next_frame.name) {
-                            //dbg!(&bone.name);
-                            //dbg!(&next_frame.name);
-                            //dbg!(&peek_frame.name);
                             delete_spans.push(bone.rotation_spans[*idx]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Inside helpers
+    for (idx, helper) in model.helpers.iter().enumerate() {
 
-                            //irrf.nth(1);
+        // Range translation frames
+        {
+            let mut in_range_translation_frames = Vec::<(usize, Frame)>::new();
+            for (idx, frame) in helper.translation_frames.iter().enumerate() {
+                let key = frame.name;
+                let frame_in_range = anim_frame_ranges
+                    .iter()
+                    .any(|range| range.contains(&key));
+                if frame_in_range {
+                    in_range_translation_frames.push((idx, *frame));
+                } else {
+                    delete_spans.push(helper.translation_spans[idx]);
+                }
+            }
+            let mut irtf = in_range_translation_frames
+                .iter()
+                .peekable();
+            while let Some((_, curr_frame)) = irtf.next() {
+                if let Some((idx, next_frame)) = irtf.peek() {
+                    if curr_frame.values == next_frame.values {
+                        if !special_frames.contains(&next_frame.name) {
+                            delete_spans.push(helper.translation_spans[*idx]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Range rotation frames
+        {
+            let mut in_range_rotation_frames = Vec::<(usize, Frame)>::new();
+            for (idx, frame) in helper.rotation_frames.iter().enumerate() {
+                let key = frame.name;
+                let frame_in_range = anim_frame_ranges
+                    .iter()
+                    .any(|range| range.contains(&key));
+                if frame_in_range {
+                    in_range_rotation_frames.push((idx, *frame));
+                } else {
+                    delete_spans.push(helper.rotation_spans[idx]);
+                }
+            }
+            let mut irrf = in_range_rotation_frames
+                .iter()
+                .peekable();
+            while let Some((_, curr_frame)) = irrf.next() {
+                if let Some((idx, next_frame)) = irrf.peek() {
+                    if curr_frame.values == next_frame.values {
+                        if !special_frames.contains(&next_frame.name) {
+                            delete_spans.push(helper.rotation_spans[*idx]);
                         }
                     }
                 }

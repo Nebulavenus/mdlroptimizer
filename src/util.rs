@@ -19,8 +19,6 @@ pub fn remove_redundant_lines(input: String, spans: Vec<[usize; 2]>) -> String {
             let end = line[1] - difference;
             result.replace_range(start..end, "");
             difference += line[1] - line[0];
-            //dbg!(difference);
-            //dbg!(idx);
         })
         .for_each(drop);
     result
@@ -34,27 +32,14 @@ pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> 
         .enumerate()
         .map(|(idx, span)| {
             let (line, new_value) = span;
-            dbg!(new_value);
             let mut start = line[0] - difference;
             let mut end = line[1] - difference;
             let old_value = &result.clone()[start..end];
-            dbg!(old_value);
-            //result.replace_range(start..end, "");
-            //start -= old_value.len();
-            //end -= old_value.len();
-            let corr = old_value.len() - new_value.to_string().len();
-            dbg!(corr);
-            //end += corr;
 
-            //dbg!(&new_value);
-            //end -= old_value.len();
+            let corr = old_value.len() - new_value.to_string().len();
+
             result.replace_range(start..end, new_value.to_string().as_str());
-            //difference += end - start;
-            if corr != 0 {
-                difference += corr;
-            }
-            //dbg!(difference);
-            //dbg!(idx);
+            difference += corr;
         })
         .for_each(drop);
     result

@@ -8,6 +8,7 @@ pub struct Model {
     pub name: String,
     pub sequences: Vec<Anim>,
     pub bones: Vec<Bone>,
+    pub helpers: Vec<Bone>,
 }
 
 impl Model {

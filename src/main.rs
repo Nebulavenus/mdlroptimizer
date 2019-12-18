@@ -37,7 +37,7 @@ pub fn parse_optimize_model(path: &Path) {
     // First mark and delete redundant lines
     let model= parse_file(&raw_string);
     let redundant_lines = optimize_model(model);
-    dbg!(&redundant_lines.len());
+    println!("{} redundant lines found.", &redundant_lines.len());
     let processed_string
         = remove_redundant_lines(raw_string, redundant_lines);
 
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn test() {
-        //parse_optimize_model("././testfiles/ChaosWarrior_opt1.mdl".as_ref());
+        //parse_optimize_model("././testfiles/ChaosWarrior_unopt.mdl".as_ref());
         parse_optimize_model("././testfiles/DruidCat.mdl".as_ref());
     }
 }
