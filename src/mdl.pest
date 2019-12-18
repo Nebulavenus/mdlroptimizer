@@ -14,7 +14,7 @@ complex_value = { number ~ ","? ~ WHITE_SPACE? }
 chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9' }
 
 field_name = @{ chars* }
-section_name = @{ (chars | " " | "-")* }
+section_name = @{ (chars | " " | "-" | "." | "+")* }
 
 field = { data ~ "," }
 	data = ${ (field_name ~ WHITE_SPACE ~ (simple | complex)) | field_name }
@@ -44,11 +44,11 @@ section = {
     attachment | pivot_points | particle_emitter2 | event_object | camera
 }
 	version = { "Version" ~ "{" ~ field* ~ "}" }
-    model = { "Model" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ field* ~ "}" }
+    model = { "Model" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ field* ~ "}" }
     sequences = { "Sequences" ~ number ~ "{" ~ sequence* ~ "}" }
     global_sequences = { "GlobalSequences" ~ number ~ "{" ~  field* ~ "}" }
-    bone = { "Bone" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ bone_field* ~ "}" }
-    helper = { "Helper" ~ "\"" ~ field_name ~ "\"" ~ "{" ~ bone_field* ~ "}" }
+    bone = { "Bone" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ bone_field* ~ "}" }
+    helper = { "Helper" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ bone_field* ~ "}" }
 
     anything_between = _{ (!("}" ~ (section_names | EOI)) ~ ANY)* }
 
