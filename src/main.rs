@@ -18,12 +18,12 @@ mod optimizer;
 
 use parser::parse_file;
 use optimizer::optimize_model;
-use crate::util::{remove_redundant_lines, replace_values_at_spans, combine_spans_and_value};
+use crate::util::{remove_redundant_lines, replace_values_at_spans};
+use crate::optimizer::bone_section_spans_count;
 use std::fs;
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
-use crate::optimizer::bone_section_spans;
 
 #[took(description = "Optimizing model...")]
 pub fn parse_optimize_model(path: &Path) {
@@ -34,33 +34,20 @@ pub fn parse_optimize_model(path: &Path) {
     let mut raw_string = String::with_capacity(buf_size);
     file.read_to_string(&mut raw_string).expect("good");
 
-    // All important values
+    // First mark and delete redundant lines
     let model= parse_file(&raw_string);
-    let (redundant_lines, translation_values, rotation_values)
-        = optimize_model(model);
+    let redundant_lines = optimize_model(model);
     dbg!(&redundant_lines.len());
-    println!("{:?}", translation_values);
-    println!("{:?}", rotation_values);
     let processed_string
         = remove_redundant_lines(raw_string, redundant_lines);
 
     // Replace old values in all bones translation sections
     let model1 = parse_file(&processed_string);
-    let (translation_spans, _) = bone_section_spans(model1);
-    let mut to_replace_translation_spans
-        = combine_spans_and_value(translation_spans, translation_values);
-    //println!("{:?}", &to_replace_translation_spans);
+    let (translation_spans, rotation_spans) = bone_section_spans_count(model1);
     let processed_string1
-        = replace_values_at_spans(processed_string, to_replace_translation_spans);
-
-    // Replace old values in all bones rotations sections
-    let model2 = parse_file(&processed_string1);
-    let (_, rotation_spans) = bone_section_spans(model2);
-    let mut to_replace_rotation_spans
-        = combine_spans_and_value(rotation_spans, rotation_values);
-    //println!("{:?}", &to_replace_rotation_spans);
+        = replace_values_at_spans(processed_string, translation_spans);
     let final_string
-        = replace_values_at_spans(processed_string1, to_replace_rotation_spans);
+        = replace_values_at_spans(processed_string1, rotation_spans);
 
 
     // Output result

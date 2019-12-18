@@ -3,23 +3,23 @@ use crate::model::{Model, Frame, Bone};
 use std::collections::{HashMap, HashSet};
 use std::ops::Range;
 
-pub fn bone_section_spans(model: Model) -> (Vec<(String, [usize; 2])>, Vec<(String, [usize; 2])>) {
+pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([usize; 2], u32)>) {
     let mut translation_section_spans = Vec::new();
     let mut rotation_section_spans= Vec::new();
     for bone in model.bones.iter() {
-        translation_section_spans.push((bone.name.clone(), bone.translation_span));
-        rotation_section_spans.push((bone.name.clone(), bone.rotation_span));
+        if !bone.translation_frames.is_empty() {
+            translation_section_spans.push((bone.translation_span, bone.translation_frames.len() as u32));
+        }
+        if !bone.rotation_frames.is_empty() {
+            rotation_section_spans.push((bone.rotation_span, bone.rotation_frames.len() as u32));
+        }
     }
     (translation_section_spans, rotation_section_spans)
 }
 
-pub fn optimize_model(model: Model) -> (Vec<[usize; 2]>, Vec<(String, u32)>, Vec<(String, u32)>) {
+pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
     // Duplicates frames
     let mut delete_spans = Vec::<[usize; 2]>::new();
-
-    // Span and new value
-    let mut translation_section_values: Vec<(String, u32)> = Vec::new();
-    let mut rotations_section_values: Vec<(String, u32)> = Vec::new();
 
     // Start and end frames for animation
     let mut special_frames = Vec::<u32>::new();
@@ -33,26 +33,27 @@ pub fn optimize_model(model: Model) -> (Vec<[usize; 2]>, Vec<(String, u32)>, Vec
     //println!("{:?}", &special_frames);
 
     for (idx, bone) in model.bones.iter().enumerate() {
-        let mut unique_frames = Vec::<Frame>::new();
-        let mut deleted_spans_count = 0usize;
+        let mut unique_frame = Vec::<Frame>::new();
         for (idx, frame) in bone.translation_frames.iter().enumerate() {
             // Try to insert unique frame, if not mark lines to delete.
-            match unique_frames.pop() {
+            match unique_frame.pop() {
                 None => {
+                    /*
                     let key = frame.name;
                     let frame_in_range = anim_frame_ranges
                         .iter()
                         .any(|range| range.contains(&key));
                     if frame_in_range {
-                        unique_frames.push(*frame);
+                        unique_frame.push(*frame);
                     } else {
                         deleted_spans_count += 1;
                         delete_spans.push(bone.translation_spans[idx]);
-                    }
+                    }*/
+                    unique_frame.push(*frame);
                 },
                 Some(vec_frame) => {
                     if frame.values != vec_frame.values {
-                        unique_frames.push(*frame);
+                        unique_frame.push(*frame);
                     } else {
                         if !special_frames.contains(&frame.name) {
                             //dbg!(&frame.name);
@@ -62,38 +63,28 @@ pub fn optimize_model(model: Model) -> (Vec<[usize; 2]>, Vec<(String, u32)>, Vec
                 }
             }
         }
-        //if !unique_frames.is_empty() {
-        if !bone.translation_spans.is_empty() {
-            translation_section_values.push((
-                bone.name.clone(),
-                //(bone.translation_frames.len() - unique_frames.len()) as u32
-                //unique_frames.len() as u32
-                //deleted_spans_count as u32
-                (bone.translation_spans.len() - deleted_spans_count) as u32
-            ));
-        }
-        //}
 
-        unique_frames.clear();
-        deleted_spans_count = 0;
+        unique_frame.clear();
         for (idx, frame) in bone.rotation_frames.iter().enumerate() {
             // Try to insert unique frame, if not mark lines to delete.
-            match unique_frames.pop() {
+            match unique_frame.pop() {
                 None => {
+                    /*
                     let key = frame.name;
                     let frame_in_range = anim_frame_ranges
                         .iter()
                         .any(|range| range.contains(&key));
                     if frame_in_range {
-                        unique_frames.push(*frame);
+                        unique_frame.push(*frame);
                     } else {
                         delete_spans.push(bone.rotation_spans[idx]);
                         deleted_spans_count += 1;
-                    }
+                    }*/
+                    unique_frame.push(*frame);
                 },
                 Some(vec_frame) => {
                     if frame.values != vec_frame.values {
-                        unique_frames.push(*frame);
+                        unique_frame.push(*frame);
                     } else {
                         if !special_frames.contains(&frame.name) {
                             delete_spans.push(bone.rotation_spans[idx]);
@@ -102,22 +93,9 @@ pub fn optimize_model(model: Model) -> (Vec<[usize; 2]>, Vec<(String, u32)>, Vec
                 }
             }
         }
-        //if !unique_frames.is_empty() {
-        if !bone.rotation_spans.is_empty() {
-            rotations_section_values.push((
-                bone.name.clone(),
-                //(bone.rotation_frames.len() - unique_frames.len()) as u32
-                //unique_frames.len() as u32
-                (bone.rotation_spans.len() - deleted_spans_count) as u32
-            ));
-        }
-        //}
-
-        //unique_frames.insert(idx, unique_frame);
     }
-    dbg!(&translation_section_values);
 
-    (delete_spans, translation_section_values, rotations_section_values)
+    delete_spans
 }
 
 
@@ -133,8 +111,6 @@ mod tests {
             .expect("cannot find file");
         let model = parse_file(&file);
         let redundant_lines = optimize_model(model);
-        println!("{:?}", redundant_lines.0);
-        println!("{:?}", redundant_lines.1);
-        println!("{:?}", redundant_lines.2);
+        println!("{:?}", redundant_lines);
     }
 }

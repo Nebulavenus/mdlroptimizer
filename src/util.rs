@@ -59,25 +59,3 @@ pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> 
         .for_each(drop);
     result
 }
-
-pub fn combine_spans_and_value(spans: Vec<(String, [usize;2])>, values: Vec<(String, u32)>)
-    -> Vec<([usize; 2], u32)> {
-    let mut result = Vec::<([usize; 2], u32)>::new();
-    for (name, new_value) in values {
-        let mut some_span: Option<[usize; 2]> = None;
-        for (bone_name, translation_span) in spans.clone() {
-            if name == bone_name {
-                some_span = Some(translation_span);
-                break;
-            }
-            some_span = None;
-        }
-        match some_span {
-            Some(span) => {
-                result.push((span, new_value));
-            },
-            None => ()
-        }
-    }
-    result
-}
