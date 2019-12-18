@@ -34,71 +34,81 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
     println!("{:?}", &anim_frame_ranges);
 
     for (idx, bone) in model.bones.iter().enumerate() {
-        let mut unique_frame = Vec::<Frame>::new();
-        let mut in_range_frames = Vec::<(usize, Frame)>::new();
-        for (idx, frame) in bone.translation_frames.iter().enumerate() {
-            let key = frame.name;
-            let frame_in_range = anim_frame_ranges
-                .iter()
-                .any(|range| range.contains(&key));
-            if frame_in_range {
-                in_range_frames.push((idx, *frame));
-            } else {
-                delete_spans.push(bone.translation_spans[idx]);
-            }
-        }
-        /*
-        for (idx, frame) in in_range_frames.clone() {
-            match unique_frame.pop() {
-                None => {
-                    unique_frame.push(frame);
-                },
-                Some(vec_frame) => {
-                    if frame.values != vec_frame.values {
-                        unique_frame.push(frame);
-                    } else {
-                        //dbg!(&frame.name);
-                        delete_spans.push(bone.translation_spans[idx]);
-                    }
+
+        // Range translation frames
+        {
+            let mut in_range_translation_frames = Vec::<(usize, Frame)>::new();
+            for (idx, frame) in bone.translation_frames.iter().enumerate() {
+                let key = frame.name;
+                let frame_in_range = anim_frame_ranges
+                    .iter()
+                    .any(|range| range.contains(&key));
+                if frame_in_range {
+                    in_range_translation_frames.push((idx, *frame));
+                } else {
+                    delete_spans.push(bone.translation_spans[idx]);
                 }
             }
-        }
-        */
-
-        unique_frame.clear();
-        in_range_frames.clear();
-        for (idx, frame) in bone.rotation_frames.iter().enumerate() {
-            let key = frame.name;
-            let frame_in_range = anim_frame_ranges
+            let mut irtf = in_range_translation_frames
                 .iter()
-                .any(|range| range.contains(&key));
-            if frame_in_range {
-                in_range_frames.push((idx, *frame));
-            } else {
-                delete_spans.push(bone.rotation_spans[idx]);
-            }
-        }
-        /*
-        for (idx, frame) in in_range_frames {
-            match unique_frame.pop() {
-                None => {
-                    unique_frame.push(frame);
-                },
-                Some(vec_frame) => {
-                    if frame.values != vec_frame.values {
-                        unique_frame.push(frame);
-                    } else {
-                        if !special_frames.contains(&frame.name) {
-                            //dbg!(&frame.name);
-                            delete_spans.push(bone.rotation_spans[idx]);
+                .peekable();
+            while let Some((_, curr_frame)) = irtf.next() {
+                if let Some((idx, next_frame)) = irtf.peek() {
+                    //if next_frame.values != peek_frame.values {
+                    if curr_frame.values == next_frame.values {
+                        //dbg!(bone.translation_spans[*idx]);
+                        if !special_frames.contains(&next_frame.name) {
+                            dbg!(&bone.name);
+                            dbg!(&curr_frame.name);
+                            dbg!(&next_frame.name);
+                            delete_spans.push(bone.translation_spans[*idx]);
+
+                            // Skip curr_frame which is marked next_frame
+                            //irtf.nth(1);
+                            //continue;
                         }
                     }
                 }
             }
         }
-        */
+
+        // Range rotation frames
+        {
+            let mut in_range_rotation_frames = Vec::<(usize, Frame)>::new();
+            for (idx, frame) in bone.rotation_frames.iter().enumerate() {
+                let key = frame.name;
+                let frame_in_range = anim_frame_ranges
+                    .iter()
+                    .any(|range| range.contains(&key));
+                if frame_in_range {
+                    in_range_rotation_frames.push((idx, *frame));
+                } else {
+                    delete_spans.push(bone.rotation_spans[idx]);
+                }
+            }
+            let mut irrf = in_range_rotation_frames
+                .iter()
+                .peekable();
+            while let Some((_, curr_frame)) = irrf.next() {
+                if let Some((idx, next_frame)) = irrf.peek() {
+                    //if next_frame.values != peek_frame.values {
+                    if curr_frame.values == next_frame.values {
+                        //dbg!(bone.translation_spans[*idx]);
+                        if !special_frames.contains(&next_frame.name) {
+                            //dbg!(&bone.name);
+                            //dbg!(&next_frame.name);
+                            //dbg!(&peek_frame.name);
+                            delete_spans.push(bone.rotation_spans[*idx]);
+
+                            //irrf.nth(1);
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    delete_spans.sort();
     delete_spans
 }
 
