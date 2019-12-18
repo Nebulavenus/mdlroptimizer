@@ -88,6 +88,6 @@ mod tests {
     #[test]
     fn test() {
         //parse_optimize_model("././testfiles/ChaosWarrior_opt1.mdl".as_ref());
-        parse_optimize_model("././testfiles/DruidCat1.mdl".as_ref());
+        parse_optimize_model("././testfiles/DruidCat.mdl".as_ref());
     }
 }

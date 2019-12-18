@@ -1,7 +1,7 @@
 use pest::Span;
 use crate::model::{Model, Frame, Bone};
 use std::collections::{HashMap, HashSet};
-use std::ops::Range;
+use std::ops::{Range, RangeInclusive};
 
 pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([usize; 2], u32)>) {
     let mut translation_section_spans = Vec::new();
@@ -23,76 +23,80 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
 
     // Start and end frames for animation
     let mut special_frames = Vec::<u32>::new();
-    let mut anim_frame_ranges = Vec::<Range<u32>>::new();
+    let mut anim_frame_ranges = Vec::<RangeInclusive<u32>>::new();
 
     for anim in model.sequences {
         special_frames.push(anim.interval[0]);
         special_frames.push(anim.interval[1]);
-        anim_frame_ranges.push((anim.interval[0]..anim.interval[1]));
+        anim_frame_ranges.push((anim.interval[0]..=anim.interval[1]));
     }
     //println!("{:?}", &special_frames);
+    println!("{:?}", &anim_frame_ranges);
 
     for (idx, bone) in model.bones.iter().enumerate() {
         let mut unique_frame = Vec::<Frame>::new();
+        let mut in_range_frames = Vec::<(usize, Frame)>::new();
         for (idx, frame) in bone.translation_frames.iter().enumerate() {
-            // Try to insert unique frame, if not mark lines to delete.
+            let key = frame.name;
+            let frame_in_range = anim_frame_ranges
+                .iter()
+                .any(|range| range.contains(&key));
+            if frame_in_range {
+                in_range_frames.push((idx, *frame));
+            } else {
+                delete_spans.push(bone.translation_spans[idx]);
+            }
+        }
+        /*
+        for (idx, frame) in in_range_frames.clone() {
             match unique_frame.pop() {
                 None => {
-                    /*
-                    let key = frame.name;
-                    let frame_in_range = anim_frame_ranges
-                        .iter()
-                        .any(|range| range.contains(&key));
-                    if frame_in_range {
-                        unique_frame.push(*frame);
-                    } else {
-                        deleted_spans_count += 1;
-                        delete_spans.push(bone.translation_spans[idx]);
-                    }*/
-                    unique_frame.push(*frame);
+                    unique_frame.push(frame);
                 },
                 Some(vec_frame) => {
                     if frame.values != vec_frame.values {
-                        unique_frame.push(*frame);
+                        unique_frame.push(frame);
                     } else {
-                        if !special_frames.contains(&frame.name) {
-                            //dbg!(&frame.name);
-                            delete_spans.push(bone.translation_spans[idx]);
-                        }
+                        //dbg!(&frame.name);
+                        delete_spans.push(bone.translation_spans[idx]);
                     }
                 }
             }
         }
+        */
 
         unique_frame.clear();
+        in_range_frames.clear();
         for (idx, frame) in bone.rotation_frames.iter().enumerate() {
-            // Try to insert unique frame, if not mark lines to delete.
+            let key = frame.name;
+            let frame_in_range = anim_frame_ranges
+                .iter()
+                .any(|range| range.contains(&key));
+            if frame_in_range {
+                in_range_frames.push((idx, *frame));
+            } else {
+                delete_spans.push(bone.rotation_spans[idx]);
+            }
+        }
+        /*
+        for (idx, frame) in in_range_frames {
             match unique_frame.pop() {
                 None => {
-                    /*
-                    let key = frame.name;
-                    let frame_in_range = anim_frame_ranges
-                        .iter()
-                        .any(|range| range.contains(&key));
-                    if frame_in_range {
-                        unique_frame.push(*frame);
-                    } else {
-                        delete_spans.push(bone.rotation_spans[idx]);
-                        deleted_spans_count += 1;
-                    }*/
-                    unique_frame.push(*frame);
+                    unique_frame.push(frame);
                 },
                 Some(vec_frame) => {
                     if frame.values != vec_frame.values {
-                        unique_frame.push(*frame);
+                        unique_frame.push(frame);
                     } else {
                         if !special_frames.contains(&frame.name) {
+                            //dbg!(&frame.name);
                             delete_spans.push(bone.rotation_spans[idx]);
                         }
                     }
                 }
             }
         }
+        */
     }
 
     delete_spans
