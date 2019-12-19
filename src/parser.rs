@@ -2,7 +2,7 @@ use pest::{Parser, Span};
 use std::collections::HashMap;
 use std::fs;
 use std::str::FromStr;
-use crate::model::{Model, Anim, Bone, Frame};
+use crate::model::{Model, Anim, Bone, Frame, GlAnim};
 use pest::iterators::Pairs;
 
 #[derive(Parser)]
@@ -184,6 +184,25 @@ pub fn parse_file(input: &str) -> Model {
                                 let inner_model = pair.into_inner();
                                 model.parse(inner_model.clone());
                             },
+                            Rule::global_sequences => {
+                                let inner_gl_sequences = pair.into_inner();
+                                inner_gl_sequences
+                                    .clone()
+                                    .map(|pair| {
+                                        match pair.as_rule() {
+                                            Rule::field => {
+                                                let mut gl_anim = GlAnim::default();
+                                                let (name, values)
+                                                    = parse_field(pair.into_inner().clone());
+                                                gl_anim.name = name;
+                                                gl_anim.duration = values[0] as u32;
+                                                model.gl_sequences.push(gl_anim);
+                                            },
+                                            _ => (),
+                                        }
+                                    })
+                                    .for_each(drop);
+                            }
                             Rule::sequences => {
                                 let inner_sequences = pair.into_inner();
                                 inner_sequences

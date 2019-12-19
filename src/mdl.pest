@@ -14,7 +14,7 @@ complex_value = { number ~ ","? ~ WHITE_SPACE? }
 chars = _{'a'..'z' | 'A'..'Z' | "_" | '0'..'9' }
 
 field_name = @{ chars* }
-section_name = @{ (chars | " " | "-" | "." | "+")* }
+section_name = @{ (!"\"" ~ ANY)* }
 
 field = { data ~ "," }
 	data = ${ (field_name ~ WHITE_SPACE ~ (simple | complex)) | field_name }
@@ -24,16 +24,16 @@ field = { data ~ "," }
 sequence = { "Anim" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ field* ~ "}" }
 
 bone_field = { field | translation | rotation | b_geoset | scaling }
-    interp_type = { "Linear" | "Hermite" | "Bezier" }
+    interp_type = { "DontInterp" | "Linear" | "Hermite" | "Bezier" }
     keys_field = ${ (number | "InTan" | "OutTan") ~ ":"? ~ WHITE_SPACE ~ (simple | complex) ~ "," }
-	translation = { "Translation" ~ number ~ "{" ~ interp_type ~ "," ~ keys_field* ~ "}" }
-    rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ keys_field* ~ "}" }
+	translation = { "Translation" ~ number ~ "{" ~ interp_type ~ "," ~ field? ~ keys_field* ~ "}" }
+    rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ field? ~ keys_field* ~ "}" }
     b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," }
-    scaling = { "Scaling" ~ number ~ "{" ~ interp_type ~ "," ~ field ~ keys_field* ~ "}" }
+    scaling = { "Scaling" ~ number ~ "{" ~ interp_type ~ "," ~ field? ~ keys_field* ~ "}" }
 
 section_names = {
 	"Version" | "Model" | "Sequences" | "GlobalSequences" | "Bone" |
-	"Helper" | "Materials" | "TextureAnims" | "Geoset" | "GeosetAnim " |
+	"Helper" | "Materials" | "TextureAnims" | "Geoset " | "GeosetAnim " |
 	"Textures" | "Attachment " | "PivotPoints" | "ParticleEmitter2" |
     "EventObject" | "Camera"
 }

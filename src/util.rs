@@ -37,9 +37,9 @@ pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> 
             let old_value = &result.clone()[start..end];
 
             let corr = old_value.len() - new_value.to_string().len();
+            end -= corr;
 
             result.replace_range(start..end, new_value.to_string().as_str());
-            difference += corr;
         })
         .for_each(drop);
     result

@@ -30,6 +30,7 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
     let mut delete_spans = Vec::<[usize; 2]>::new();
 
     // Start and end frames for animation
+    let mut gl_frames = Vec::<u32>::new();
     let mut special_frames = Vec::<u32>::new();
     let mut anim_frame_ranges = Vec::<RangeInclusive<u32>>::new();
 
@@ -37,6 +38,10 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
         special_frames.push(anim.interval[0]);
         special_frames.push(anim.interval[1]);
         anim_frame_ranges.push((anim.interval[0]..=anim.interval[1]));
+    }
+
+    for gl_anim in model.gl_sequences {
+        gl_frames.push(gl_anim.duration);
     }
 
     // Inside bones
@@ -53,7 +58,9 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
                 if frame_in_range {
                     in_range_translation_frames.push((idx, *frame));
                 } else {
-                    delete_spans.push(bone.translation_spans[idx]);
+                    if !gl_frames.contains(&key) {
+                        delete_spans.push(bone.translation_spans[idx]);
+                    }
                 }
             }
             let mut irtf = in_range_translation_frames
@@ -81,7 +88,9 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
                 if frame_in_range {
                     in_range_rotation_frames.push((idx, *frame));
                 } else {
-                    delete_spans.push(bone.rotation_spans[idx]);
+                    if !gl_frames.contains(&key) {
+                        delete_spans.push(bone.rotation_spans[idx]);
+                    }
                 }
             }
             let mut irrf = in_range_rotation_frames
@@ -112,7 +121,9 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
                 if frame_in_range {
                     in_range_translation_frames.push((idx, *frame));
                 } else {
-                    delete_spans.push(helper.translation_spans[idx]);
+                    if !gl_frames.contains(&key) {
+                        delete_spans.push(helper.translation_spans[idx]);
+                    }
                 }
             }
             let mut irtf = in_range_translation_frames
@@ -140,7 +151,9 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
                 if frame_in_range {
                     in_range_rotation_frames.push((idx, *frame));
                 } else {
-                    delete_spans.push(helper.rotation_spans[idx]);
+                    if !gl_frames.contains(&key) {
+                        delete_spans.push(helper.rotation_spans[idx]);
+                    }
                 }
             }
             let mut irrf = in_range_rotation_frames

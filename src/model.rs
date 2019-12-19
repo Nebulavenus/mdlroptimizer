@@ -7,6 +7,7 @@ use std::collections::hash_map::DefaultHasher;
 pub struct Model {
     pub name: String,
     pub sequences: Vec<Anim>,
+    pub gl_sequences: Vec<GlAnim>,
     pub bones: Vec<Bone>,
     pub helpers: Vec<Bone>,
 }
@@ -16,7 +17,7 @@ impl Model {
         inner_model
             .map(|pair| {
                 match pair.as_rule() {
-                    Rule::field_name => {
+                    Rule::section_name => {
                         self.name = String::from(pair.as_str());
                     },
                     _ => (),
@@ -24,6 +25,11 @@ impl Model {
             })
             .for_each(drop);
     }
+}
+#[derive(Default, Debug, Eq, PartialEq)]
+pub struct GlAnim {
+    pub name: String,
+    pub duration: u32,
 }
 
 #[derive(Default, Debug, Eq, PartialEq)]
@@ -75,7 +81,7 @@ impl Bone {
             .clone()
             .map(|pair| {
                 match pair.as_rule() {
-                    Rule::field_name => {
+                    Rule::section_name => {
                         self.name = String::from(pair.as_str());
                     },
                     Rule::bone_field => {
@@ -115,14 +121,12 @@ impl Bone {
 #[derive(Default, Debug, Copy, Clone)]
 pub struct Frame {
     pub name: u32,
-    pub values: [f32; 3],
+    pub values: [Option<f32>; 4],
 }
 
 impl PartialEq for Frame {
     fn eq(&self, other: &Self) -> bool {
-        self.values[0] == other.values[0] &&
-        self.values[1] == other.values[1] &&
-        self.values[2] == other.values[2]
+        self.values == other.values
     }
 }
 
@@ -130,7 +134,10 @@ impl Frame {
     pub fn parse(&mut self, inner_bone_field_keys: pest::iterators::Pairs<'_, Rule>) {
         let (name, values) = parse_bone_field_keys(inner_bone_field_keys);
         self.name = name;
-        let array: [f32; 3] = [values[0], values[1], values[2]];
+        let mut array: [Option<f32>; 4] = [None; 4];
+        for (idx, value) in values.iter().enumerate() {
+            array[idx] = Some(*value);
+        }
         self.values = array;
     }
 }
