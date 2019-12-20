@@ -25,7 +25,7 @@ pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([
     (translation_section_spans, rotation_section_spans)
 }
 
-pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
+pub fn optimize_model(model: Model, threshold: f64) -> Vec<[usize; 2]> {
     // Duplicates frames
     let mut delete_spans = Vec::<[usize; 2]>::new();
 
@@ -64,7 +64,20 @@ pub fn optimize_model(model: Model) -> Vec<[usize; 2]> {
             .peekable();
         while let Some((_, curr_frame)) = irf.next() {
             if let Some((idx, next_frame)) = irf.peek() {
-                if curr_frame.values == next_frame.values {
+                let mut identical = true;
+                // Threshold
+                for i in 0..4 {
+                    if let Some(curr_val) = curr_frame.values[i] {
+                        let next_val = next_frame.values[i].unwrap();
+                        let diff = curr_val - next_val;
+                        if diff > threshold as f32 || diff < -threshold as f32 {
+                            identical = false;
+                            break;
+                        }
+                    }
+                }
+
+                if identical {
                     if !special_frames.contains(&next_frame.name) {
                         delete_spans.push(spans[*idx]);
                     }
@@ -108,7 +121,7 @@ mod tests {
         let file = fs::read_to_string("././testfiles/ChaosWarrior_opt1.mdl")
             .expect("cannot find file");
         let model = parse_file(&file);
-        let redundant_lines = optimize_model(model);
+        let redundant_lines = optimize_model(model, 0.0);
         println!("{:?}", redundant_lines);
     }
 }

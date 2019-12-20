@@ -1,7 +1,8 @@
 extern crate took;
-extern crate clap;
 extern crate pest;
 extern crate regex;
+#[macro_use]
+extern crate clap;
 #[macro_use]
 extern crate pest_derive;
 #[macro_use]
@@ -26,7 +27,7 @@ use std::fs::File;
 use std::io::Read;
 
 #[took(description = "Optimizing model...")]
-pub fn parse_optimize_model(path: &Path) {
+pub fn parse_optimize_model(path: &Path, threshold: f64) {
     // Load mdl file at specific path
     let file_name = path.file_stem().unwrap();
     let mut file = File::open(path).expect("cannot find file");
@@ -36,7 +37,7 @@ pub fn parse_optimize_model(path: &Path) {
 
     // First mark and delete redundant lines
     let model= parse_file(&raw_string);
-    let redundant_lines = optimize_model(model);
+    let redundant_lines = optimize_model(model, threshold);
     println!("{} redundant lines found.", &redundant_lines.len());
     let processed_string
         = remove_redundant_lines(raw_string, redundant_lines);
@@ -58,26 +59,40 @@ pub fn parse_optimize_model(path: &Path) {
 }
 
 fn main() {
-    let matches = App::new("   Mdlroptimizer")
-        .version("0.1.0")
-        .about("   Tool for optimizing mdl models.")
-        .author("   Nebula Venus (Github)")
-        /*
-        .arg(Arg::with_name("dir")
-            .help("Process all files in directory")
+    let matches = App::new("Mdlroptimizer")
+        .version(crate_version!())
+        .about("Tool for optimizing mdl models.")
+        .author("Nebula Venus (Github)")
+        .arg(Arg::with_name("threshold")
             .takes_value(true)
-            .short("p")
-            .short("parse-all"))
-        */
-        .arg(Arg::with_name("file")
-            .help("Optimize mdl file")
-            .takes_value(true)
-            .short("f")
-            .long("optimize"))
+            .short("t")
+            .long("threshold"))
+        .subcommand(SubCommand::with_name("optimize")
+            .about("Optimize mdl file")
+            .arg(
+                Arg::with_name("input")
+                    .help("the file to optimize")
+                    .index(1)
+                    .required(true)
+            ),
+        )
         .get_matches();
 
-    if let Some(file) = matches.value_of("file") {
-        parse_optimize_model(file.as_ref());
+    let mut threshold = 0f64;
+    if let Some(th) = matches.value_of("threshold") {
+        let new_th = th.parse::<f64>()
+            .expect("entered threshold value is not correct");
+        if new_th.is_sign_negative() {
+            println!("Threshold can't be negative, default value will be used");
+            //threshold = 0.001;
+        } else {
+            threshold = new_th;
+        }
+    }
+
+    if let Some(ref matches) = matches.subcommand_matches("optimize") {
+        let file = matches.value_of("input").unwrap();
+        parse_optimize_model(file.as_ref(), threshold);
     }
 }
 
@@ -88,6 +103,6 @@ mod tests {
     #[test]
     fn test() {
         //parse_optimize_model("././testfiles/ChaosWarrior_unopt.mdl".as_ref());
-        parse_optimize_model("././testfiles/DruidCat.mdl".as_ref());
+        parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64);
     }
 }
