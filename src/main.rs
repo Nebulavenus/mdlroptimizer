@@ -27,7 +27,7 @@ use std::fs::File;
 use std::io::Read;
 
 #[took(description = "Optimizing model...")]
-pub fn parse_optimize_model(path: &Path, threshold: f64) {
+pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
     // Load mdl file at specific path
     let file_name = path.file_stem().unwrap();
     let mut file = File::open(path).expect("cannot find file");
@@ -36,19 +36,19 @@ pub fn parse_optimize_model(path: &Path, threshold: f64) {
     file.read_to_string(&mut raw_string).expect("good");
 
     // First mark and delete redundant lines
-    let model= parse_file(&raw_string);
-    let redundant_lines = optimize_model(model, threshold);
+    let (model, parsed_string) = parse_file(raw_string);
+    let redundant_lines = optimize_model(model, threshold, outside);
     println!("{} redundant lines found.", &redundant_lines.len());
     let processed_string
-        = remove_redundant_lines(raw_string, redundant_lines);
+        = remove_redundant_lines(parsed_string, redundant_lines);
 
     // Replace old values in all bones translation sections
-    let model1 = parse_file(&processed_string);
+    let (model1, parsed_string1) = parse_file(processed_string);
     let (translation_spans, rotation_spans) = bone_section_spans_count(model1);
-    let processed_string1
-        = replace_values_at_spans(processed_string, translation_spans);
+    let processed_string2
+        = replace_values_at_spans(parsed_string1, translation_spans);
     let final_string
-        = replace_values_at_spans(processed_string1, rotation_spans);
+        = replace_values_at_spans(processed_string2, rotation_spans);
 
 
     // Output result
@@ -63,6 +63,9 @@ fn main() {
         .version(crate_version!())
         .about("Tool for optimizing mdl models.")
         .author("Nebula Venus (Github)")
+        .arg(Arg::with_name("outside")
+            .help("Delete redundant frames but outside anim sequences")
+            .long("outside"))
         .arg(Arg::with_name("threshold")
             .takes_value(true)
             .short("t")
@@ -90,9 +93,14 @@ fn main() {
         }
     }
 
+    let mut outside = false;
+    if matches.is_present("outside") {
+        outside = true;
+    }
+
     if let Some(ref matches) = matches.subcommand_matches("optimize") {
         let file = matches.value_of("input").unwrap();
-        parse_optimize_model(file.as_ref(), threshold);
+        parse_optimize_model(file.as_ref(), threshold, outside);
     }
 }
 
@@ -103,6 +111,6 @@ mod tests {
     #[test]
     fn test() {
         //parse_optimize_model("././testfiles/ChaosWarrior_unopt.mdl".as_ref());
-        parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64);
+        parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64, false);
     }
 }

@@ -161,12 +161,11 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
      rotation_section_span, translation_spans, rotation_spans)
 }
 
-pub fn parse_file(input: &str) -> Model {
+pub fn parse_file(input: String) -> (Model, String) {
     use crate::util::remove_comments;
-    //let unparsed_file = remove_comments(&input);
-    //let unparsed_file = input.to_string();
+    let result = remove_comments(&input);
 
-    let pairs = MDLParser::parse(Rule::mdl, &input)
+    let pairs = MDLParser::parse(Rule::mdl, &result)
         .expect("unsuccessful parse")
         .next().unwrap().into_inner();
 
@@ -243,7 +242,7 @@ pub fn parse_file(input: &str) -> Model {
     }
 
     //println!("{:#?}", model);
-    model
+    (model, result)
 }
 
 #[cfg(test)]
@@ -255,7 +254,7 @@ mod tests {
     fn parse_api_file() {
         let file = fs::read_to_string("././testfiles/ChaosWarrior_unopt.mdl")
             .expect("cannot find file");
-        let model = parse_file(&file);
+        let (model, file) = parse_file(file);
     }
 
     #[test]

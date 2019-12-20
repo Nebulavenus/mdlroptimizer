@@ -25,7 +25,7 @@ pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([
     (translation_section_spans, rotation_section_spans)
 }
 
-pub fn optimize_model(model: Model, threshold: f64) -> Vec<[usize; 2]> {
+pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize; 2]> {
     // Duplicates frames
     let mut delete_spans = Vec::<[usize; 2]>::new();
 
@@ -52,7 +52,9 @@ pub fn optimize_model(model: Model, threshold: f64) -> Vec<[usize; 2]> {
                 .iter()
                 .any(|range| range.contains(&key));
             if frame_in_range {
-                in_range_frames.push((idx, *frame));
+                if !outside {
+                    in_range_frames.push((idx, *frame));
+                }
             } else {
                 if !gl_frames.contains(&key) {
                     delete_spans.push(spans[idx]);
@@ -120,8 +122,8 @@ mod tests {
     fn optimize_api_model() {
         let file = fs::read_to_string("././testfiles/ChaosWarrior_opt1.mdl")
             .expect("cannot find file");
-        let model = parse_file(&file);
-        let redundant_lines = optimize_model(model, 0.0);
+        let (model, parsed) = parse_file(file);
+        let redundant_lines = optimize_model(model, 0.0, true);
         println!("{:?}", redundant_lines);
     }
 }
