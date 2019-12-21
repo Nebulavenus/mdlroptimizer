@@ -1,7 +1,4 @@
 use crate::parser::{Rule, parse_field, parse_bone_field, parse_bone_field_keys};
-use std::str::FromStr;
-use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
 
 #[derive(Default, Debug)]
 pub struct Model {
@@ -67,11 +64,14 @@ impl Anim {
 pub struct Bone {
     pub name: String,
     pub translation_span: [usize; 2],
-    pub rotation_span: [usize; 2],
     pub translation_frames: Vec<Frame>,
-    pub rotation_frames: Vec<Frame>,
     pub translation_spans: Vec<[usize; 2]>,
+    pub rotation_span: [usize; 2],
+    pub rotation_frames: Vec<Frame>,
     pub rotation_spans: Vec<[usize; 2]>,
+    pub scaling_span: [usize; 2],
+    pub scaling_frames: Vec<Frame>,
+    pub scaling_spans: Vec<[usize; 2]>,
 }
 
 impl Bone {
@@ -85,30 +85,32 @@ impl Bone {
                         self.name = String::from(pair.as_str());
                     },
                     Rule::bone_field => {
-                        //println!("{}", pair);
                         let inner_bone_field = pair.into_inner();
-                        let (translations, rotations,
-                            translation_span, rotation_span,
-                            translation_spans, rotation_spans)
+                        let (translation_frames, rotation_frames, scaling_frames,
+                            translation_span, rotation_span, scaling_span,
+                            translation_spans, rotation_spans, scaling_spans)
                             = parse_bone_field(inner_bone_field.clone());
 
-                        if !translations.is_empty() {
-                            self.translation_spans = translation_spans.iter()
-                                .map(|span| [span.start(), span.end()])
-                                .collect();
-                            self.translation_frames = translations;
+                        if !translation_frames.is_empty() {
+                            self.translation_spans = translation_spans;
+                            self.translation_frames = translation_frames;
                         }
-                        if !rotations.is_empty() {
-                            self.rotation_spans = rotation_spans.iter()
-                                .map(|span| [span.start(), span.end()])
-                                .collect();
-                            self.rotation_frames = rotations;
+                        if !rotation_frames.is_empty() {
+                            self.rotation_spans = rotation_spans;
+                            self.rotation_frames = rotation_frames;
                         }
-                        if !translation_span.as_str().is_empty() {
-                            self.translation_span = [translation_span.start(), translation_span.end()];
+                        if !scaling_frames.is_empty() {
+                            self.scaling_spans = scaling_spans;
+                            self.scaling_frames = scaling_frames;
                         }
-                        if !rotation_span.as_str().is_empty() {
-                            self.rotation_span = [rotation_span.start(), rotation_span.end()];
+                        if translation_span[0] != 0 && translation_span[1] != 0 {
+                            self.translation_span = translation_span;
+                        }
+                        if rotation_span[0] != 0 && rotation_span[1] != 0 {
+                            self.rotation_span = rotation_span;
+                        }
+                        if scaling_span[0] != 0 && scaling_span[1] != 0 {
+                            self.scaling_span = scaling_span;
                         }
                     }
                     _ => (),

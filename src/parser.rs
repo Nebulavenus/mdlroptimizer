@@ -1,6 +1,4 @@
-use pest::{Parser, Span};
-use std::collections::HashMap;
-use std::fs;
+use pest::Parser;
 use std::str::FromStr;
 use crate::model::{Model, Anim, Bone, Frame, GlAnim};
 use pest::iterators::Pairs;
@@ -88,79 +86,89 @@ pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>
 }
 
 pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
-    -> (Vec<Frame>, Vec<Frame>, Span, Span, Vec<Span>, Vec<Span>) {
-    let mut translation_section_span = Span::new("", 0, 0).unwrap();
-    let mut rotation_section_span = Span::new("", 0, 0).unwrap();
-    let mut translations = Vec::<Frame>::new();
-    let mut rotations = Vec::<Frame>::new();
-    let mut translation_spans = Vec::<Span>::new();
-    let mut rotation_spans = Vec::<Span>::new();
+                        -> (Vec<Frame>, Vec<Frame>, Vec<Frame>,
+                            [usize; 2], [usize; 2], [usize; 2],
+                            Vec<[usize; 2]>, Vec<[usize; 2]>, Vec<[usize; 2]>) {
+
+    let mut translation_section_span = [0usize; 2];
+    let mut translation_frames = Vec::<Frame>::new();
+    let mut translation_spans = Vec::<[usize; 2]>::new();
+
+    let mut rotation_section_span = [0usize; 2];
+    let mut rotation_frames = Vec::<Frame>::new();
+    let mut rotation_spans = Vec::<[usize; 2]>::new();
+
+    let mut scaling_section_span = [0usize; 2];
+    let mut scaling_frames = Vec::<Frame>::new();
+    let mut scaling_spans = Vec::<[usize; 2]>::new();
+
+    let collect_data_in =
+        |inner_section: Pairs<Rule>, section_span: &mut [usize; 2],
+         frames: &mut Vec<Frame>, spans: &mut Vec<[usize; 2]>| {
+
+            let mut section_count = 0;
+            inner_section
+                .clone()
+                .map(|pair| {
+                    match pair.as_rule() {
+                        Rule::number => {
+                            let span = pair.clone().as_span();
+                            *section_span = [span.start(), span.end()];
+                            section_count = i32::from_str(pair.as_str()).unwrap();
+                        },
+                        Rule::keys_field => {
+                            let span = pair.clone().as_span();
+                            spans.push([span.start(), span.end()]);
+
+                            let mut frame = Frame::default();
+                            let inner_keys_field = pair.into_inner();
+                            frame.parse(inner_keys_field.clone());
+                            frames.push(frame);
+                        },
+                        _ => (),
+                    }
+                })
+                .for_each(drop);
+    };
 
     inner_bone_field
         .map(|pair| {
             match pair.as_rule() {
                 Rule::translation => {
-                    // First is the Translation "Number" {
-                    let mut translation_count = 0;
-
                     let inner_translation = pair.into_inner();
-                    inner_translation
-                        .clone()
-                        .map(|pair| {
-                            match pair.as_rule() {
-                                Rule::number => {
-                                    translation_section_span = pair.clone().as_span();
-                                    translation_count = i32::from_str(pair.as_str()).unwrap();
-                                },
-                                Rule::keys_field => {
-                                    translation_spans.push(pair.clone().as_span());
-
-                                    let mut frame = Frame::default();
-                                    let inner_keys_field = pair.into_inner();
-                                    frame.parse(inner_keys_field.clone());
-                                    translations.push(frame);
-                                },
-                                _ => (),
-                            }
-                        })
-                        .for_each(drop);
-
-                    //dbg!(translation_count);
+                    collect_data_in(
+                        inner_translation,
+                        &mut translation_section_span,
+                        &mut translation_frames,
+                        &mut translation_spans,
+                    );
                 },
                 Rule::rotation => {
-                    let mut rotation_count = 0;
-
                     let inner_rotation = pair.into_inner();
-                    inner_rotation
-                        .clone()
-                        .map(|pair| {
-                            match pair.as_rule() {
-                                Rule::number => {
-                                    rotation_section_span = pair.clone().as_span();
-                                    rotation_count = i32::from_str(pair.as_str()).unwrap();
-                                },
-                                Rule::keys_field => {
-                                    rotation_spans.push(pair.clone().as_span());
-
-                                    let mut frame = Frame::default();
-                                    let inner_keys_field = pair.into_inner();
-                                    frame.parse(inner_keys_field.clone());
-                                    rotations.push(frame);
-                                },
-                                _ => (),
-                            }
-                        })
-                        .for_each(drop);
-
-                    //dbg!(rotation_count);
+                    collect_data_in(
+                        inner_rotation,
+                        &mut rotation_section_span,
+                        &mut rotation_frames,
+                        &mut rotation_spans,
+                    );
+                },
+                Rule::scaling => {
+                    let inner_scaling = pair.into_inner();
+                    collect_data_in(
+                        inner_scaling,
+                        &mut scaling_section_span,
+                        &mut scaling_frames,
+                        &mut scaling_spans,
+                    );
                 }
                 _ => (),
             }
         })
         .for_each(drop);
 
-    (translations, rotations, translation_section_span,
-     rotation_section_span, translation_spans, rotation_spans)
+    (translation_frames, rotation_frames, scaling_frames,
+     translation_section_span, rotation_section_span, scaling_section_span,
+     translation_spans, rotation_spans, scaling_spans)
 }
 
 pub fn parse_file(input: String) -> (Model, String) {
@@ -251,6 +259,7 @@ pub fn parse_file(input: String) -> (Model, String) {
 mod tests {
     use super::*;
     use std::fs::File;
+    use std::fs;
 
     #[test]
     fn parse_api_file() {

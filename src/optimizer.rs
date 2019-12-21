@@ -1,18 +1,21 @@
-use pest::Span;
-use crate::model::{Model, Frame, Bone};
-use std::collections::{HashMap, HashSet};
-use std::ops::{Range, RangeInclusive};
-use itertools::{Itertools, multipeek};
+use crate::model::{Model, Frame};
+use std::ops::RangeInclusive;
+use itertools::multipeek;
 
-pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([usize; 2], u32)>) {
+pub fn bone_section_spans_count(model: Model) -> Vec<([usize; 2], u32)> {
+    let mut result = Vec::new();
     let mut translation_section_spans = Vec::new();
     let mut rotation_section_spans= Vec::new();
+    let mut scaling_section_spans = Vec::new();
     for bone in model.bones.iter() {
         if !bone.translation_frames.is_empty() {
             translation_section_spans.push((bone.translation_span, bone.translation_frames.len() as u32));
         }
         if !bone.rotation_frames.is_empty() {
             rotation_section_spans.push((bone.rotation_span, bone.rotation_frames.len() as u32));
+        }
+        if !bone.scaling_frames.is_empty() {
+            scaling_section_spans.push((bone.scaling_span, bone.scaling_frames.len() as u32))
         }
     }
     for helper in model.helpers.iter() {
@@ -22,8 +25,15 @@ pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([
         if !helper.rotation_frames.is_empty() {
             rotation_section_spans.push((helper.rotation_span, helper.rotation_frames.len() as u32));
         }
+        if !helper.scaling_frames.is_empty() {
+            scaling_section_spans.push((helper.scaling_span, helper.scaling_frames.len() as u32))
+        }
     }
-    (translation_section_spans, rotation_section_spans)
+    result.extend(translation_section_spans);
+    result.extend(rotation_section_spans);
+    result.extend(scaling_section_spans);
+    result.sort();
+    result
 }
 
 pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize; 2]> {
@@ -38,7 +48,7 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
     for anim in model.sequences {
         special_frames.push(anim.interval[0]);
         special_frames.push(anim.interval[1]);
-        anim_frame_ranges.push((anim.interval[0]..=anim.interval[1]));
+        anim_frame_ranges.push(anim.interval[0]..=anim.interval[1]);
     }
 
     for gl_anim in model.gl_sequences {
@@ -108,22 +118,28 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
     };
 
     // Inside bones
-    for (idx, bone) in model.bones.iter().enumerate() {
+    for (_idx, bone) in model.bones.iter().enumerate() {
 
         // Range translation frames
         collect_frames_from(bone.translation_frames.as_ref(), bone.translation_spans.as_ref());
 
         // Range rotation frames
         collect_frames_from(bone.rotation_frames.as_ref(), bone.rotation_spans.as_ref());
+
+        // Range scaling frames
+        collect_frames_from(bone.scaling_frames.as_ref(), bone.scaling_spans.as_ref());
     }
     // Inside helpers
-    for (idx, helper) in model.helpers.iter().enumerate() {
+    for (_idx, helper) in model.helpers.iter().enumerate() {
 
         // Range translation frames
         collect_frames_from(helper.translation_frames.as_ref(), helper.translation_spans.as_ref());
 
         // Range rotation frames
         collect_frames_from(helper.rotation_frames.as_ref(), helper.rotation_spans.as_ref());
+
+        // Range scaling frames
+        collect_frames_from(helper.scaling_frames.as_ref(), helper.scaling_spans.as_ref());
     }
 
     delete_spans.sort();

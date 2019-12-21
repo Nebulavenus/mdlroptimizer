@@ -10,7 +10,7 @@ pub fn remove_comments(text: &str) -> String {
 
 pub fn replace_hermite_with_linear(text: &str) -> String {
     lazy_static! {
-        static ref RE1: Regex = Regex::new(r"Hermite").unwrap();
+        static ref RE1: Regex = Regex::new(r"Hermite|Bezier").unwrap();
     }
     RE1.replace_all(&text, "Linear").to_string()
 }
@@ -21,7 +21,7 @@ pub fn remove_redundant_lines(input: String, spans: Vec<[usize; 2]>) -> String {
     spans
         .iter()
         .enumerate()
-        .map(|(idx, line)| {
+        .map(|(_idx, line)| {
             let start = line[0] - difference;
             let end = line[1] - difference;
             result.replace_range(start..end, "");
@@ -37,7 +37,7 @@ pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> 
     spans
         .iter()
         .enumerate()
-        .map(|(idx, span)| {
+        .map(|(_idx, span)| {
             let (line, new_value) = span;
             let mut start = line[0] - difference;
             let mut end = line[1] - difference;

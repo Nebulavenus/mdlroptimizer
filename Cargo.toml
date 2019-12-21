@@ -4,6 +4,12 @@ version = "0.1.0"
 authors = ["Nebula Venus <6595784+Nebulavenus@users.noreply.github.com>"]
 edition = "2018"
 
+[profile.release]
+panic = 'abort'
+codegen-units = 1
+lto = true
+opt-level = 'z'
+
 [dependencies]
 clap = "2.33.0"
 pest = "2.1.2"

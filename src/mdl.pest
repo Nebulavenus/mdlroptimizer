@@ -23,13 +23,13 @@ field = { data ~ "," }
 
 sequence = { "Anim" ~ "\"" ~ section_name ~ "\"" ~ "{" ~ field* ~ "}" }
 
-bone_field = { field | translation | rotation | b_geoset | scaling }
+bone_field = { field | translation | rotation | scaling | b_geoset }
     interp_type = { "DontInterp" | "Linear" | "Hermite" | "Bezier" }
     keys_field = ${ (number | "InTan" | "OutTan") ~ ":"? ~ WHITE_SPACE ~ (simple | complex) ~ "," }
 	translation = { "Translation" ~ number ~ "{" ~ interp_type ~ "," ~ field? ~ keys_field* ~ "}" }
     rotation = { "Rotation" ~ number ~ "{" ~ interp_type ~ "," ~ field? ~ keys_field* ~ "}" }
-    b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," }
     scaling = { "Scaling" ~ number ~ "{" ~ interp_type ~ "," ~ field? ~ keys_field* ~ "}" }
+    b_geoset = { ("GeosetId Multiple" | "GeosetAnimId None") ~ "," }
 
 section_names = {
 	"Version" | "Model" | "Sequences" | "GlobalSequences" | "Bone" |
