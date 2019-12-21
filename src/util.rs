@@ -43,22 +43,16 @@ pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> 
             let mut end = line[1] - difference;
             let old_value = &result.clone()[start..end];
 
-            /*
             let mut whitespaces = String::with_capacity(old_value.len());
             for _ in 0..old_value.len() {
                 whitespaces.push_str(" ");
             }
             result.replace_range(start..end, whitespaces.as_str());
-            */
 
             let corr = old_value.len() - new_value.to_string().len();
-            if corr > 0 {
-                result.replace_range((end-1)..(end), "");
-            }
             end -= corr;
 
             result.replace_range(start..end, new_value.to_string().as_str());
-            difference += corr;
         })
         .for_each(drop);
     result
