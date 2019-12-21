@@ -64,12 +64,15 @@ impl Anim {
 pub struct Bone {
     pub name: String,
     pub translation_span: [usize; 2],
+    pub translation_interp_span: [usize; 2],
     pub translation_frames: Vec<Frame>,
     pub translation_spans: Vec<[usize; 2]>,
     pub rotation_span: [usize; 2],
+    pub rotation_interp_span: [usize; 2],
     pub rotation_frames: Vec<Frame>,
     pub rotation_spans: Vec<[usize; 2]>,
     pub scaling_span: [usize; 2],
+    pub scaling_interp_span: [usize; 2],
     pub scaling_frames: Vec<Frame>,
     pub scaling_spans: Vec<[usize; 2]>,
 }
@@ -88,6 +91,7 @@ impl Bone {
                         let inner_bone_field = pair.into_inner();
                         let (translation_frames, rotation_frames, scaling_frames,
                             translation_span, rotation_span, scaling_span,
+                            translation_interp_span, rotation_interp_span, scaling_interp_span,
                             translation_spans, rotation_spans, scaling_spans)
                             = parse_bone_field(inner_bone_field.clone());
 
@@ -105,12 +109,15 @@ impl Bone {
                         }
                         if translation_span[0] != 0 && translation_span[1] != 0 {
                             self.translation_span = translation_span;
+                            self.translation_interp_span = translation_interp_span;
                         }
                         if rotation_span[0] != 0 && rotation_span[1] != 0 {
                             self.rotation_span = rotation_span;
+                            self.rotation_interp_span = rotation_interp_span;
                         }
                         if scaling_span[0] != 0 && scaling_span[1] != 0 {
                             self.scaling_span = scaling_span;
+                            self.scaling_interp_span = scaling_interp_span;
                         }
                     }
                     _ => (),

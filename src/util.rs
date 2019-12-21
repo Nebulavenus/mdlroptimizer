@@ -8,13 +8,6 @@ pub fn remove_comments(text: &str) -> String {
     RE.replace_all(&text, "").to_string()
 }
 
-pub fn replace_hermite_with_linear(text: &str) -> String {
-    lazy_static! {
-        static ref RE1: Regex = Regex::new(r"Hermite|Bezier").unwrap();
-    }
-    RE1.replace_all(&text, "Linear").to_string()
-}
-
 pub fn remove_redundant_lines(input: String, spans: Vec<[usize; 2]>) -> String {
     let mut result = input;
     let mut difference = 0usize;
@@ -53,6 +46,27 @@ pub fn replace_values_at_spans(input: String, spans: Vec<([usize; 2], u32)>) -> 
             end -= corr;
 
             result.replace_range(start..end, new_value.to_string().as_str());
+        })
+        .for_each(drop);
+    result
+}
+
+pub fn replace_interp_type_at_spans(input: String, spans: Vec<([usize; 2])>) -> String {
+    let mut result = input;
+    let mut difference = 0usize;
+    spans
+        .iter()
+        .enumerate()
+        .map(|(_idx, span)| {
+            let line = span;
+            let mut start = line[0] - difference;
+            let mut end = line[1] - difference;
+            let old_str = &result.clone()[start..end];
+
+            let corr = old_str.len() - "Linear".len();
+            end -= corr;
+
+            result.replace_range(start..end, "Linear");
         })
         .for_each(drop);
     result

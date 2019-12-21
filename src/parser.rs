@@ -88,22 +88,26 @@ pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>
 pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                         -> (Vec<Frame>, Vec<Frame>, Vec<Frame>,
                             [usize; 2], [usize; 2], [usize; 2],
+                            [usize; 2], [usize; 2], [usize; 2],
                             Vec<[usize; 2]>, Vec<[usize; 2]>, Vec<[usize; 2]>) {
 
     let mut translation_section_span = [0usize; 2];
     let mut translation_frames = Vec::<Frame>::new();
     let mut translation_spans = Vec::<[usize; 2]>::new();
+    let mut translation_interp_span = [0usize; 2];
 
     let mut rotation_section_span = [0usize; 2];
     let mut rotation_frames = Vec::<Frame>::new();
     let mut rotation_spans = Vec::<[usize; 2]>::new();
+    let mut rotation_interp_span = [0usize; 2];
 
     let mut scaling_section_span = [0usize; 2];
     let mut scaling_frames = Vec::<Frame>::new();
     let mut scaling_spans = Vec::<[usize; 2]>::new();
+    let mut scaling_interp_span = [0usize; 2];
 
     let collect_data_in =
-        |inner_section: Pairs<Rule>, section_span: &mut [usize; 2],
+        |inner_section: Pairs<Rule>, section_span: &mut [usize; 2], interp_span: &mut [usize; 2],
          frames: &mut Vec<Frame>, spans: &mut Vec<[usize; 2]>| {
 
             let mut section_count = 0;
@@ -115,6 +119,10 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                             let span = pair.clone().as_span();
                             *section_span = [span.start(), span.end()];
                             section_count = i32::from_str(pair.as_str()).unwrap();
+                        },
+                        Rule::interp_type => {
+                            let span = pair.clone().as_span();
+                            *interp_span = [span.start(), span.end()];
                         },
                         Rule::keys_field => {
                             let span = pair.clone().as_span();
@@ -139,6 +147,7 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                     collect_data_in(
                         inner_translation,
                         &mut translation_section_span,
+                        &mut translation_interp_span,
                         &mut translation_frames,
                         &mut translation_spans,
                     );
@@ -148,6 +157,7 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                     collect_data_in(
                         inner_rotation,
                         &mut rotation_section_span,
+                        &mut rotation_interp_span,
                         &mut rotation_frames,
                         &mut rotation_spans,
                     );
@@ -157,6 +167,7 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                     collect_data_in(
                         inner_scaling,
                         &mut scaling_section_span,
+                        &mut scaling_interp_span,
                         &mut scaling_frames,
                         &mut scaling_spans,
                     );
@@ -168,6 +179,7 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
 
     (translation_frames, rotation_frames, scaling_frames,
      translation_section_span, rotation_section_span, scaling_section_span,
+     translation_interp_span, rotation_interp_span, scaling_interp_span,
      translation_spans, rotation_spans, scaling_spans)
 }
 

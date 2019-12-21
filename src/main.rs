@@ -21,7 +21,7 @@ mod optimizer;
 
 use parser::parse_file;
 use optimizer::optimize_model;
-use crate::util::{remove_redundant_lines, replace_values_at_spans, replace_hermite_with_linear};
+use crate::util::{remove_redundant_lines, replace_values_at_spans, replace_interp_type_at_spans};
 use crate::optimizer::bone_section_spans_count;
 use std::path::Path;
 use std::fs::File;
@@ -45,12 +45,12 @@ pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
 
     // Replace old values in all bones translation sections
     let (model1, parsed_string1) = parse_file(processed_string);
-    let bone_section_spans
+    let (bone_section_spans, bone_interp_spans)
         = bone_section_spans_count(model1);
     let replaced_section_string
         = replace_values_at_spans(parsed_string1, bone_section_spans);
-
-    let final_string = replace_hermite_with_linear(&replaced_section_string);
+    let final_string
+        = replace_interp_type_at_spans(replaced_section_string, bone_interp_spans);
 
     // Output result
     let new_file_name =
@@ -114,6 +114,7 @@ mod tests {
         //parse_optimize_model("././testfiles/ChaosWarrior_unopt.mdl".as_ref());
         //parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64, false);
         //parse_optimize_model("././testfiles/footman.mdl".as_ref(), 0 as f64, false);
-        parse_optimize_model("./hm_938.mdl".as_ref(), 0.05 as f64, false);
+        //parse_optimize_model("./hm_938.mdl".as_ref(), 0.05 as f64, false);
+        parse_optimize_model("././testfiles300/HeroLichess.mdl".as_ref(), 0 as f64, false);
     }
 }

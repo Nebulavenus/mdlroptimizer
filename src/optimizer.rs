@@ -2,38 +2,58 @@ use crate::model::{Model, Frame};
 use std::ops::RangeInclusive;
 use itertools::multipeek;
 
-pub fn bone_section_spans_count(model: Model) -> Vec<([usize; 2], u32)> {
-    let mut result = Vec::new();
+pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<[usize; 2]>) {
+    let mut result_sections = Vec::new();
+    let mut result_interps = Vec::new();
+
     let mut translation_section_spans = Vec::new();
+    let mut translation_interp_spans = Vec::new();
+
     let mut rotation_section_spans= Vec::new();
+    let mut rotation_interp_spans = Vec::new();
+
     let mut scaling_section_spans = Vec::new();
+    let mut scaling_interp_spans = Vec::new();
+
     for bone in model.bones.iter() {
         if !bone.translation_frames.is_empty() {
             translation_section_spans.push((bone.translation_span, bone.translation_frames.len() as u32));
+            translation_interp_spans.push(bone.translation_interp_span);
         }
         if !bone.rotation_frames.is_empty() {
             rotation_section_spans.push((bone.rotation_span, bone.rotation_frames.len() as u32));
+            rotation_interp_spans.push(bone.rotation_interp_span);
         }
         if !bone.scaling_frames.is_empty() {
-            scaling_section_spans.push((bone.scaling_span, bone.scaling_frames.len() as u32))
+            scaling_section_spans.push((bone.scaling_span, bone.scaling_frames.len() as u32));
+            scaling_interp_spans.push(bone.scaling_interp_span);
         }
     }
     for helper in model.helpers.iter() {
         if !helper.translation_frames.is_empty() {
             translation_section_spans.push((helper.translation_span, helper.translation_frames.len() as u32));
+            translation_interp_spans.push(helper.translation_interp_span);
         }
         if !helper.rotation_frames.is_empty() {
             rotation_section_spans.push((helper.rotation_span, helper.rotation_frames.len() as u32));
+            rotation_interp_spans.push(helper.rotation_interp_span);
         }
         if !helper.scaling_frames.is_empty() {
-            scaling_section_spans.push((helper.scaling_span, helper.scaling_frames.len() as u32))
+            scaling_section_spans.push((helper.scaling_span, helper.scaling_frames.len() as u32));
+            scaling_interp_spans.push(helper.scaling_interp_span);
         }
     }
-    result.extend(translation_section_spans);
-    result.extend(rotation_section_spans);
-    result.extend(scaling_section_spans);
-    result.sort();
-    result
+    result_sections.extend(translation_section_spans);
+    result_sections.extend(rotation_section_spans);
+    result_sections.extend(scaling_section_spans);
+    result_sections.sort();
+
+    result_interps.extend(translation_interp_spans);
+    result_interps.extend(rotation_interp_spans);
+    result_interps.extend(scaling_interp_spans);
+    result_interps.sort();
+
+    (result_sections, result_interps)
 }
 
 pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize; 2]> {
