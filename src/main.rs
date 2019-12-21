@@ -26,6 +26,7 @@ use crate::optimizer::bone_section_spans_count;
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
+use itertools::Itertools;
 
 #[took(description = "Optimizing model...")]
 pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
@@ -47,6 +48,16 @@ pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
     let (model1, parsed_string1) = parse_file(processed_string);
     let (bone_section_spans, bone_interp_spans)
         = bone_section_spans_count(model1);
+
+    let bone_interp_spans = bone_interp_spans.iter().filter_map(|span| {
+        let name = parsed_string1.clone()[span[0]..span[1]].to_string();
+        if name != "DontInterp".to_string() {
+            Some(*span)
+        } else {
+            None
+        }
+    }).collect_vec();
+
     let replaced_section_string
         = replace_values_at_spans(parsed_string1, bone_section_spans);
     let final_string
