@@ -2,6 +2,8 @@ extern crate took;
 extern crate pest;
 extern crate regex;
 #[macro_use]
+extern crate itertools;
+#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate pest_derive;
@@ -19,7 +21,7 @@ mod optimizer;
 
 use parser::parse_file;
 use optimizer::optimize_model;
-use crate::util::{remove_redundant_lines, replace_values_at_spans};
+use crate::util::{remove_redundant_lines, replace_values_at_spans, replace_hermite_with_linear};
 use crate::optimizer::bone_section_spans_count;
 use std::fs;
 use std::path::Path;
@@ -47,9 +49,10 @@ pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
     let (translation_spans, rotation_spans) = bone_section_spans_count(model1);
     let processed_string2
         = replace_values_at_spans(parsed_string1, translation_spans);
-    let final_string
+    let processed_string3
         = replace_values_at_spans(processed_string2, rotation_spans);
 
+    let final_string = replace_hermite_with_linear(&processed_string3);
 
     // Output result
     let new_file_name =
@@ -111,6 +114,8 @@ mod tests {
     #[test]
     fn test() {
         //parse_optimize_model("././testfiles/ChaosWarrior_unopt.mdl".as_ref());
-        parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64, false);
+        //parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64, false);
+        //parse_optimize_model("././testfiles/footman.mdl".as_ref(), 0 as f64, false);
+        //parse_optimize_model("./hm_938.mdl".as_ref(), 0.05 as f64, false);
     }
 }

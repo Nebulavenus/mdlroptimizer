@@ -2,6 +2,7 @@ use pest::Span;
 use crate::model::{Model, Frame, Bone};
 use std::collections::{HashMap, HashSet};
 use std::ops::{Range, RangeInclusive};
+use itertools::{Itertools, multipeek};
 
 pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<([usize; 2], u32)>) {
     let mut translation_section_spans = Vec::new();
@@ -53,7 +54,12 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
                 .any(|range| range.contains(&key));
             if frame_in_range {
                 if !outside {
-                    in_range_frames.push((idx, *frame));
+                    // Forced linearization
+                    if frame.hermite {
+                        delete_spans.push(spans[idx]);
+                    } else {
+                        in_range_frames.push((idx, *frame));
+                    }
                 }
             } else {
                 if !gl_frames.contains(&key) {
@@ -61,11 +67,15 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
                 }
             }
         }
-        let mut irf = in_range_frames
-            .iter()
-            .peekable();
-        while let Some((_, curr_frame)) = irf.next() {
-            if let Some((idx, next_frame)) = irf.peek() {
+        let mut skip_by = 0;
+        let mut irf = multipeek(in_range_frames.iter());
+        'next: while let Some((_, curr_frame)) = irf.next() {
+            if skip_by > 0 {
+                skip_by -= 1;
+                continue;
+            }
+            let mut potential_frames = Vec::new();
+            'peek: while let Some((next_idx, next_frame)) = irf.peek() {
                 let mut identical = true;
                 // Threshold
                 for i in 0..4 {
@@ -78,11 +88,20 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
                         }
                     }
                 }
-
                 if identical {
+                    skip_by += 1;
                     if !special_frames.contains(&next_frame.name) {
-                        delete_spans.push(spans[*idx]);
+                        potential_frames.push(spans[*next_idx]);
                     }
+                } else {
+                    skip_by += 1;
+                    break 'peek;
+                }
+            }
+            if !potential_frames.is_empty() {
+                potential_frames.pop().unwrap();
+                for frame in potential_frames {
+                    delete_spans.push(frame);
                 }
             }
         }

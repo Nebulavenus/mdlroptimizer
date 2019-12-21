@@ -60,15 +60,17 @@ pub fn parse_field(inner_field: Pairs<'_, Rule>) -> (String, Vec<f32>) {
     (field_name, values)
 }
 
-pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>) {
+pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>, bool) {
     let mut name = 0;
     let mut values = Vec::<f32>::new();
 
+    let mut is_hermite = true;
     inner_bone_keys
         .map(|pair| {
             match pair.as_rule() {
                 Rule::number => {
                     name = u32::from_str(pair.as_str()).unwrap();
+                    is_hermite = false;
                 },
                 Rule::complex_value => {
                     for inner_complex_value in pair.into_inner().clone() {
@@ -82,7 +84,7 @@ pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>
         })
         .for_each(drop);
 
-    (name, values)
+    (name, values, is_hermite)
 }
 
 pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)

@@ -122,6 +122,7 @@ impl Bone {
 pub struct Frame {
     pub name: u32,
     pub values: [Option<f32>; 4],
+    pub hermite: bool,
 }
 
 impl PartialEq for Frame {
@@ -132,12 +133,13 @@ impl PartialEq for Frame {
 
 impl Frame {
     pub fn parse(&mut self, inner_bone_field_keys: pest::iterators::Pairs<'_, Rule>) {
-        let (name, values) = parse_bone_field_keys(inner_bone_field_keys);
+        let (name, values, is_hermite) = parse_bone_field_keys(inner_bone_field_keys);
         self.name = name;
         let mut array: [Option<f32>; 4] = [None; 4];
         for (idx, value) in values.iter().enumerate() {
             array[idx] = Some(*value);
         }
         self.values = array;
+        self.hermite = is_hermite;
     }
 }
