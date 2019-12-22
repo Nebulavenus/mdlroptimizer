@@ -58,18 +58,19 @@ pub fn parse_field(inner_field: Pairs<'_, Rule>) -> (String, Vec<f32>) {
     (field_name, values)
 }
 
-pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>, bool) {
-    let mut name = 0;
+pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (String, Vec<f32>) {
+    let mut name= String::new();
     let mut values = Vec::<f32>::new();
 
-    let mut is_hermite = true;
     inner_bone_keys
         .map(|pair| {
             match pair.as_rule() {
                 Rule::number => {
-                    name = u32::from_str(pair.as_str()).unwrap();
-                    is_hermite = false;
+                    name = pair.as_str().to_string();
                 },
+                Rule::field_name => {
+                    name = pair.as_str().to_string();
+                }
                 Rule::complex_value => {
                     for inner_complex_value in pair.into_inner().clone() {
                         let number =
@@ -82,33 +83,37 @@ pub fn parse_bone_field_keys(inner_bone_keys: Pairs<'_, Rule>) -> (u32, Vec<f32>
         })
         .for_each(drop);
 
-    (name, values, is_hermite)
+    (name, values)
 }
 
 pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                         -> (Vec<Frame>, Vec<Frame>, Vec<Frame>,
                             [usize; 2], [usize; 2], [usize; 2],
                             [usize; 2], [usize; 2], [usize; 2],
+                            Vec<[usize; 2]>, Vec<[usize; 2]>, Vec<[usize; 2]>,
                             Vec<[usize; 2]>, Vec<[usize; 2]>, Vec<[usize; 2]>) {
 
-    let mut translation_section_span = [0usize; 2];
     let mut translation_frames = Vec::<Frame>::new();
-    let mut translation_spans = Vec::<[usize; 2]>::new();
+    let mut translation_section_span = [0usize; 2];
     let mut translation_interp_span = [0usize; 2];
+    let mut translation_key_spans = Vec::<[usize; 2]>::new();
+    let mut translation_tan_spans = Vec::<[usize; 2]>::new();
 
-    let mut rotation_section_span = [0usize; 2];
     let mut rotation_frames = Vec::<Frame>::new();
-    let mut rotation_spans = Vec::<[usize; 2]>::new();
+    let mut rotation_section_span = [0usize; 2];
     let mut rotation_interp_span = [0usize; 2];
+    let mut rotation_key_spans = Vec::<[usize; 2]>::new();
+    let mut rotation_tan_spans = Vec::<[usize; 2]>::new();
 
-    let mut scaling_section_span = [0usize; 2];
     let mut scaling_frames = Vec::<Frame>::new();
-    let mut scaling_spans = Vec::<[usize; 2]>::new();
+    let mut scaling_section_span = [0usize; 2];
     let mut scaling_interp_span = [0usize; 2];
+    let mut scaling_key_spans = Vec::<[usize; 2]>::new();
+    let mut scaling_tan_spans = Vec::<[usize; 2]>::new();
 
     let collect_data_in =
         |inner_section: Pairs<Rule>, section_span: &mut [usize; 2], interp_span: &mut [usize; 2],
-         frames: &mut Vec<Frame>, spans: &mut Vec<[usize; 2]>| {
+         frames: &mut Vec<Frame>, key_spans: &mut Vec<[usize; 2]>, tan_spans: &mut Vec<[usize; 2]>| {
 
             let mut section_count = 0;
             inner_section
@@ -126,13 +131,22 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                         },
                         Rule::keys_field => {
                             let span = pair.clone().as_span();
-                            spans.push([span.start(), span.end()]);
+                            key_spans.push([span.start(), span.end()]);
 
                             let mut frame = Frame::default();
-                            let inner_keys_field = pair.into_inner();
-                            frame.parse(inner_keys_field.clone());
+                            let inner_key_field = pair.into_inner();
+                            frame.parse_key_field(inner_key_field.clone());
                             frames.push(frame);
                         },
+                        Rule::tans_field => {
+                            let span = pair.clone().as_span();
+                            tan_spans.push([span.start(), span.end()]);
+
+                            if let Some(last_frame) = frames.last_mut() {
+                                let inner_tan_field = pair.into_inner();
+                                last_frame.parse_tan_field(inner_tan_field.clone());
+                            }
+                        }
                         _ => (),
                     }
                 })
@@ -149,7 +163,8 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                         &mut translation_section_span,
                         &mut translation_interp_span,
                         &mut translation_frames,
-                        &mut translation_spans,
+                        &mut translation_key_spans,
+                        &mut translation_tan_spans,
                     );
                 },
                 Rule::rotation => {
@@ -159,7 +174,8 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                         &mut rotation_section_span,
                         &mut rotation_interp_span,
                         &mut rotation_frames,
-                        &mut rotation_spans,
+                        &mut rotation_key_spans,
+                        &mut rotation_tan_spans,
                     );
                 },
                 Rule::scaling => {
@@ -169,7 +185,8 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
                         &mut scaling_section_span,
                         &mut scaling_interp_span,
                         &mut scaling_frames,
-                        &mut scaling_spans,
+                        &mut scaling_key_spans,
+                        &mut scaling_tan_spans,
                     );
                 }
                 _ => (),
@@ -180,12 +197,17 @@ pub fn parse_bone_field(inner_bone_field: Pairs<'_, Rule>)
     (translation_frames, rotation_frames, scaling_frames,
      translation_section_span, rotation_section_span, scaling_section_span,
      translation_interp_span, rotation_interp_span, scaling_interp_span,
-     translation_spans, rotation_spans, scaling_spans)
+     translation_key_spans, rotation_key_spans, scaling_key_spans,
+     translation_tan_spans, rotation_tan_spans, scaling_tan_spans)
 }
 
 pub fn parse_file(input: String) -> (Model, String) {
     use crate::util::remove_comments;
-    let result = remove_comments(&input);
+    use crate::util::remove_tabs_newlines;
+    let removed_comments = remove_comments(&input);
+    let removed_tabsnewlins = remove_tabs_newlines(&removed_comments);
+    let result = removed_tabsnewlins;
+    //println!("{:?}", &result);
 
     let pairs = MDLParser::parse(Rule::mdl, &result)
         .expect("unsuccessful parse")

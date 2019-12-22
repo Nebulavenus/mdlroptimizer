@@ -29,7 +29,7 @@ use std::io::Read;
 use itertools::Itertools;
 
 #[took(description = "Optimizing model...")]
-pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
+pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool, linearize: bool) {
     // Load mdl file at specific path
     let file_name = path.file_stem().unwrap();
     let mut file = File::open(path).expect("cannot find file");
@@ -39,35 +39,47 @@ pub fn parse_optimize_model(path: &Path, threshold: f64, outside: bool) {
 
     // First mark and delete redundant lines
     let (model, parsed_string) = parse_file(raw_string);
-    let redundant_lines = optimize_model(model, threshold, outside);
+    let redundant_lines = optimize_model(model, threshold, outside, linearize);
     println!("{} redundant lines found.", &redundant_lines.len());
     let processed_string
         = remove_redundant_lines(parsed_string, redundant_lines);
+    std::fs::write("bug.mdl", &processed_string);
 
     // Replace old values in all bones translation sections
     let (model1, parsed_string1) = parse_file(processed_string);
     let (bone_section_spans, bone_interp_spans)
         = bone_section_spans_count(model1);
 
-    let bone_interp_spans = bone_interp_spans.iter().filter_map(|span| {
-        let name = parsed_string1.clone()[span[0]..span[1]].to_string();
-        if name != "DontInterp".to_string() {
-            Some(*span)
-        } else {
-            None
-        }
-    }).collect_vec();
+    if linearize {
+        let bone_interp_spans = bone_interp_spans.iter().filter_map(|span| {
+            let name = parsed_string1[span[0]..span[1]].to_string();
+            if name != "DontInterp".to_string() {
+                Some(*span)
+            } else {
+                None
+            }
+        }).collect_vec();
 
-    let replaced_section_string
-        = replace_values_at_spans(parsed_string1, bone_section_spans);
-    let final_string
-        = replace_interp_type_at_spans(replaced_section_string, bone_interp_spans);
+        let replaced_section_string
+            = replace_values_at_spans(parsed_string1, bone_section_spans);
+        let final_string
+            = replace_interp_type_at_spans(replaced_section_string, bone_interp_spans);
 
-    // Output result
-    let new_file_name =
-        String::from(file_name.to_str().unwrap()) + String::from("_optimized.mdl").as_ref();
+        // Output result
+        let new_file_name =
+            String::from(file_name.to_str().unwrap()) + String::from("_optimized.mdl").as_ref();
 
-    std::fs::write(new_file_name, final_string);
+        std::fs::write(new_file_name, final_string);
+    } else {
+        let final_string
+            = replace_values_at_spans(parsed_string1, bone_section_spans);
+
+        // Output result
+        let new_file_name =
+            String::from(file_name.to_str().unwrap()) + String::from("_optimized.mdl").as_ref();
+
+        std::fs::write(new_file_name, final_string);
+    }
 }
 
 fn main() {
@@ -78,6 +90,9 @@ fn main() {
         .arg(Arg::with_name("outside")
             .help("Delete redundant frames but outside anim sequences")
             .long("outside"))
+        .arg(Arg::with_name("linearize")
+            .help("Converts hermite/bezier to linear. Simplify keyframes")
+            .long("linearize"))
         .arg(Arg::with_name("threshold")
             .takes_value(true)
             .short("t")
@@ -110,9 +125,14 @@ fn main() {
         outside = true;
     }
 
+    let mut linearize = false;
+    if matches.is_present("linearize") {
+        linearize = true;
+    }
+
     if let Some(ref matches) = matches.subcommand_matches("optimize") {
         let file = matches.value_of("input").unwrap();
-        parse_optimize_model(file.as_ref(), threshold, outside);
+        parse_optimize_model(file.as_ref(), threshold, outside, linearize);
     }
 }
 
@@ -126,6 +146,8 @@ mod tests {
         //parse_optimize_model("././testfiles/DruidCat.mdl".as_ref(), 0 as f64, false);
         //parse_optimize_model("././testfiles/footman.mdl".as_ref(), 0 as f64, false);
         //parse_optimize_model("./hm_938.mdl".as_ref(), 0.05 as f64, false);
-        parse_optimize_model("././testfiles300/HeroLichess.mdl".as_ref(), 0 as f64, false);
+        parse_optimize_model(
+            "././testfiles300/HeroLichess.mdl".as_ref(),
+            0 as f64, false, true);
     }
 }

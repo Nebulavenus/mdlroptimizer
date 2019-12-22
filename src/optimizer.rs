@@ -1,6 +1,7 @@
 use crate::model::{Model, Frame};
 use std::ops::RangeInclusive;
 use itertools::multipeek;
+use std::str::FromStr;
 
 pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<[usize; 2]>) {
     let mut result_sections = Vec::new();
@@ -56,7 +57,7 @@ pub fn bone_section_spans_count(model: Model) -> (Vec<([usize; 2], u32)>, Vec<[u
     (result_sections, result_interps)
 }
 
-pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize; 2]> {
+pub fn optimize_model(model: Model, threshold: f64, outside: bool, linearize: bool) -> Vec<[usize; 2]> {
     // Duplicates frames
     let mut delete_spans = Vec::<[usize; 2]>::new();
 
@@ -75,25 +76,40 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
         gl_frames.push(gl_anim.duration);
     }
 
-    let mut collect_frames_from = |frames: &Vec<Frame>, spans: &Vec<[usize; 2]>| {
+    let mut collect_frames_from = |frames: &Vec<Frame>, key_spans: &Vec<[usize; 2]>, tan_spans: &Vec<[usize; 2]>| {
         let mut in_range_frames = Vec::<(usize, Frame)>::new();
         for (idx, frame) in frames.iter().enumerate() {
-            let key = frame.name;
+            let key = u32::from_str(frame.name.as_ref()).unwrap();
             let frame_in_range = anim_frame_ranges
                 .iter()
                 .any(|range| range.contains(&key));
             if frame_in_range {
                 if !outside {
                     // Forced linearization
+                    if linearize {
+                        if !tan_spans.is_empty() {
+                            // InTan + OutTan
+                            delete_spans.push(tan_spans[idx]);
+                            delete_spans.push(tan_spans[idx+1]);
+                        }
+                    }
+                    in_range_frames.push((idx, frame.clone()));
+                    /*
                     if frame.hermite {
-                        delete_spans.push(spans[idx]);
+                        delete_spans.push(key_spans[idx]);
                     } else {
                         in_range_frames.push((idx, *frame));
                     }
+                    */
                 }
             } else {
                 if !gl_frames.contains(&key) {
-                    delete_spans.push(spans[idx]);
+                    // Key + InTan + OutTan
+                    delete_spans.push(key_spans[idx]);
+                    if !tan_spans.is_empty() {
+                        delete_spans.push(tan_spans[idx]);
+                        delete_spans.push(tan_spans[idx+1]);
+                    }
                 }
             }
         }
@@ -120,8 +136,9 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
                 }
                 if identical {
                     skip_by += 1;
-                    if !special_frames.contains(&next_frame.name) {
-                        potential_frames.push(spans[*next_idx]);
+                    let name = u32::from_str(next_frame.name.as_ref()).unwrap();
+                    if !special_frames.contains(&name) {
+                        potential_frames.push((*next_idx, key_spans[*next_idx]));
                     }
                 } else {
                     skip_by += 1;
@@ -130,8 +147,11 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
             }
             if !potential_frames.is_empty() {
                 potential_frames.pop().unwrap();
-                for frame in potential_frames {
-                    delete_spans.push(frame);
+                for (idx, frame_key_span) in potential_frames {
+                    // Key + InTan + OutTan
+                    delete_spans.push(frame_key_span);
+                    delete_spans.push(tan_spans[idx]);
+                    delete_spans.push(tan_spans[idx+1]);
                 }
             }
         }
@@ -141,25 +161,49 @@ pub fn optimize_model(model: Model, threshold: f64, outside: bool) -> Vec<[usize
     for (_idx, bone) in model.bones.iter().enumerate() {
 
         // Range translation frames
-        collect_frames_from(bone.translation_frames.as_ref(), bone.translation_spans.as_ref());
+        collect_frames_from(
+            bone.translation_frames.as_ref(),
+            bone.translation_key_spans.as_ref(),
+            bone.translation_tan_spans.as_ref(),
+        );
 
         // Range rotation frames
-        collect_frames_from(bone.rotation_frames.as_ref(), bone.rotation_spans.as_ref());
+        collect_frames_from(
+            bone.rotation_frames.as_ref(),
+            bone.rotation_key_spans.as_ref(),
+            bone.rotation_tan_spans.as_ref(),
+        );
 
         // Range scaling frames
-        collect_frames_from(bone.scaling_frames.as_ref(), bone.scaling_spans.as_ref());
+        collect_frames_from(
+            bone.scaling_frames.as_ref(),
+            bone.scaling_key_spans.as_ref(),
+            bone.scaling_tan_spans.as_ref(),
+        );
     }
     // Inside helpers
     for (_idx, helper) in model.helpers.iter().enumerate() {
 
         // Range translation frames
-        collect_frames_from(helper.translation_frames.as_ref(), helper.translation_spans.as_ref());
+        collect_frames_from(
+            helper.translation_frames.as_ref(),
+            helper.translation_key_spans.as_ref(),
+            helper.translation_tan_spans.as_ref(),
+        );
 
         // Range rotation frames
-        collect_frames_from(helper.rotation_frames.as_ref(), helper.rotation_spans.as_ref());
+        collect_frames_from(
+            helper.rotation_frames.as_ref(),
+            helper.rotation_key_spans.as_ref(),
+            helper.rotation_tan_spans.as_ref(),
+        );
 
         // Range scaling frames
-        collect_frames_from(helper.scaling_frames.as_ref(), helper.scaling_spans.as_ref());
+        collect_frames_from(
+            helper.scaling_frames.as_ref(),
+            helper.scaling_key_spans.as_ref(),
+            helper.scaling_tan_spans.as_ref(),
+        );
     }
 
     delete_spans.sort();
@@ -178,7 +222,7 @@ mod tests {
         let file = fs::read_to_string("././testfiles/ChaosWarrior_opt1.mdl")
             .expect("cannot find file");
         let (model, parsed) = parse_file(file);
-        let redundant_lines = optimize_model(model, 0.0, true);
+        let redundant_lines = optimize_model(model, 0.0, true, false);
         println!("{:?}", redundant_lines);
     }
 }

@@ -66,15 +66,18 @@ pub struct Bone {
     pub translation_span: [usize; 2],
     pub translation_interp_span: [usize; 2],
     pub translation_frames: Vec<Frame>,
-    pub translation_spans: Vec<[usize; 2]>,
+    pub translation_key_spans: Vec<[usize; 2]>,
+    pub translation_tan_spans: Vec<[usize; 2]>,
     pub rotation_span: [usize; 2],
     pub rotation_interp_span: [usize; 2],
     pub rotation_frames: Vec<Frame>,
-    pub rotation_spans: Vec<[usize; 2]>,
+    pub rotation_key_spans: Vec<[usize; 2]>,
+    pub rotation_tan_spans: Vec<[usize; 2]>,
     pub scaling_span: [usize; 2],
     pub scaling_interp_span: [usize; 2],
     pub scaling_frames: Vec<Frame>,
-    pub scaling_spans: Vec<[usize; 2]>,
+    pub scaling_key_spans: Vec<[usize; 2]>,
+    pub scaling_tan_spans: Vec<[usize; 2]>,
 }
 
 impl Bone {
@@ -92,19 +95,27 @@ impl Bone {
                         let (translation_frames, rotation_frames, scaling_frames,
                             translation_span, rotation_span, scaling_span,
                             translation_interp_span, rotation_interp_span, scaling_interp_span,
-                            translation_spans, rotation_spans, scaling_spans)
+                            translation_key_spans, rotation_key_spans, scaling_key_spans,
+                            translation_tan_spans, rotation_tan_spans, scaling_tan_spans)
                             = parse_bone_field(inner_bone_field.clone());
 
                         if !translation_frames.is_empty() {
-                            self.translation_spans = translation_spans;
+                            self.translation_key_spans = translation_key_spans;
+                            self.translation_tan_spans = translation_tan_spans;
                             self.translation_frames = translation_frames;
                         }
                         if !rotation_frames.is_empty() {
-                            self.rotation_spans = rotation_spans;
+                            self.rotation_key_spans = rotation_key_spans;
+                            //if !rotation_tan_spans.is_empty() {
+                            self.rotation_tan_spans = rotation_tan_spans;
+                            //}
                             self.rotation_frames = rotation_frames;
                         }
                         if !scaling_frames.is_empty() {
-                            self.scaling_spans = scaling_spans;
+                            self.scaling_key_spans = scaling_key_spans;
+                            //if !scaling_tan_spans.is_empty() {
+                            self.scaling_tan_spans = scaling_tan_spans;
+                            //}
                             self.scaling_frames = scaling_frames;
                         }
                         if translation_span[0] != 0 && translation_span[1] != 0 {
@@ -127,11 +138,12 @@ impl Bone {
     }
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Frame {
-    pub name: u32,
+    pub name: String,
     pub values: [Option<f32>; 4],
-    pub hermite: bool,
+    pub in_tan: [Option<f32>; 4],
+    pub out_tan: [Option<f32>; 4],
 }
 
 impl PartialEq for Frame {
@@ -141,14 +153,27 @@ impl PartialEq for Frame {
 }
 
 impl Frame {
-    pub fn parse(&mut self, inner_bone_field_keys: pest::iterators::Pairs<'_, Rule>) {
-        let (name, values, is_hermite) = parse_bone_field_keys(inner_bone_field_keys);
+    pub fn parse_key_field(&mut self, inner_bone_field_keys: pest::iterators::Pairs<'_, Rule>) {
+        let (name, values) = parse_bone_field_keys(inner_bone_field_keys);
         self.name = name;
         let mut array: [Option<f32>; 4] = [None; 4];
         for (idx, value) in values.iter().enumerate() {
             array[idx] = Some(*value);
         }
         self.values = array;
-        self.hermite = is_hermite;
+    }
+
+    pub fn parse_tan_field(&mut self, inner_bone_field_keys: pest::iterators::Pairs<'_, Rule>) {
+        let (name, values) = parse_bone_field_keys(inner_bone_field_keys);
+        let mut array: [Option<f32>; 4] = [None; 4];
+        for (idx, value) in values.iter().enumerate() {
+            array[idx] = Some(*value);
+        }
+        if name.clone() == "InTan".to_string() {
+            self.in_tan = array;
+        }
+        if name.clone() == "OutTan".to_string() {
+            self.out_tan = array;
+        }
     }
 }

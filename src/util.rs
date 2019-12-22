@@ -8,6 +8,13 @@ pub fn remove_comments(text: &str) -> String {
     RE.replace_all(&text, "").to_string()
 }
 
+pub fn remove_tabs_newlines(text: &str) -> String {
+    lazy_static! {
+        static ref RE1: Regex = Regex::new(r"\t|\r|\f").unwrap();
+    }
+    RE1.replace_all(&text, "").to_string()
+}
+
 pub fn remove_redundant_lines(input: String, spans: Vec<[usize; 2]>) -> String {
     let mut result = input;
     let mut difference = 0usize;
